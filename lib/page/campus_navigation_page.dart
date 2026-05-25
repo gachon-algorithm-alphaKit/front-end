@@ -19,8 +19,8 @@ class CampusNavigationPage extends StatefulWidget {
 }
 
 class _CampusNavigationPageState extends State<CampusNavigationPage> {
-  final _departCtrl    = TextEditingController();
-  final _destCtrl      = TextEditingController();
+  final _departCtrl = TextEditingController();
+  final _destCtrl = TextEditingController();
   final _waypointCtrls = <TextEditingController>[];
   RouteResult? _result;
   List<String>? _fullPath; // P_ 포함 전체 경로
@@ -41,53 +41,43 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
   void dispose() {
     _departCtrl.dispose();
     _destCtrl.dispose();
-    for (final c in _waypointCtrls) c.dispose();
+    for (final c in _waypointCtrls) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   Future<void> _search() async {
     final depart = _departCtrl.text.trim();
-    final dest   = _destCtrl.text.trim();
+    final dest = _destCtrl.text.trim();
     if (depart.isEmpty || dest.isEmpty) {
       setState(() => _error = '출발지와 도착지를 입력해주세요.');
       return;
     }
     setState(() {
-      _isLoading       = true;
-      _error           = null;
-      _result          = null;
-      _fullPath        = null;
+      _isLoading = true;
+      _error = null;
+      _result = null;
+      _fullPath = null;
       _naverImageBytes = null;
-      _naverError      = null;
+      _naverError = null;
     });
     try {
-      final r = await CampusNavigationService.findRoute(
-        depart,
-        _waypointCtrls
-            .map((c) => c.text.trim())
-            .where((s) => s.isNotEmpty)
-            .toList(),
-        dest,
-      );
+      final r = await CampusNavigationService.findRoute(depart, _waypointCtrls.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList(), dest);
 
       // fullPath 재구성 (P_ 노드 포함)
-      final graph  = CampusNavigationService.buildCampusGraph(
-        CampusNavigationService.allCoords,
-        CampusNavigationService.walkableEdges,
-      );
-      final stops      = r.orderedStops;
-      final fullPath   = <String>[];
+      final graph = CampusNavigationService.buildCampusGraph(CampusNavigationService.allCoords, CampusNavigationService.walkableEdges);
+      final stops = r.orderedStops;
+      final fullPath = <String>[];
       for (int i = 0; i < stops.length - 1; i++) {
-        final (seg, _) = CampusNavigationService.aStar(
-          stops[i], stops[i + 1], graph, CampusNavigationService.allCoords,
-        );
+        final (seg, _) = CampusNavigationService.aStar(stops[i], stops[i + 1], graph, CampusNavigationService.allCoords);
         if (seg != null) {
           fullPath.addAll(fullPath.isEmpty ? seg : seg.skip(1));
         }
       }
 
       setState(() {
-        _result   = r;
+        _result = r;
         _fullPath = fullPath;
       });
     } on ArgumentError catch (e) {
@@ -104,13 +94,13 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
     if (_fullPath == null || _naverImageBytes != null) return;
     setState(() {
       _naverLoading = true;
-      _naverError   = null;
+      _naverError = null;
     });
     final bytes = await CampusNavigationService.fetchNaverStaticMap(_fullPath!);
     if (!mounted) return;
     setState(() {
       _naverImageBytes = bytes;
-      _naverLoading    = false;
+      _naverLoading = false;
       if (bytes == null) _naverError = '네이버 지도 이미지를 불러오지 못했습니다.';
     });
   }
@@ -135,20 +125,13 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
             buildCard(
               child: Column(
                 children: [
-                  _buildingField(
-                    _departCtrl, '출발지', Icons.radio_button_checked, Colors.green,
-                  ),
+                  _buildingField(_departCtrl, '출발지', Icons.radio_button_checked, Colors.green),
                   ..._waypointCtrls.asMap().entries.map(
                     (e) => Padding(
                       padding: const EdgeInsets.only(top: 10),
                       child: Row(
                         children: [
-                          Expanded(
-                            child: _buildingField(
-                              e.value, '경유지 ${e.key + 1}',
-                              Icons.add_location_alt, Colors.orange,
-                            ),
-                          ),
+                          Expanded(child: _buildingField(e.value, '경유지 ${e.key + 1}', Icons.add_location_alt, Colors.orange)),
                           IconButton(
                             icon: Icon(Icons.close, color: Colors.grey.shade400),
                             onPressed: () => setState(() {
@@ -161,18 +144,12 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  _buildingField(
-                    _destCtrl, '도착지', Icons.location_on, Colors.red,
-                  ),
+                  _buildingField(_destCtrl, '도착지', Icons.location_on, Colors.red),
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       OutlinedButton.icon(
-                        onPressed: _waypointCtrls.length < 3
-                            ? () => setState(
-                                  () => _waypointCtrls.add(TextEditingController()),
-                                )
-                            : null,
+                        onPressed: _waypointCtrls.length < 3 ? () => setState(() => _waypointCtrls.add(TextEditingController())) : null,
                         icon: const Icon(Icons.add, size: 16),
                         label: const Text('경유지 추가', style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
@@ -185,21 +162,12 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                         child: FilledButton.icon(
                           onPressed: _isLoading ? null : _search,
                           icon: _isLoading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                               : const Icon(Icons.route, size: 18),
                           label: Text(_isLoading ? '계산 중 (A*)...' : '최적 경로 탐색'),
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
                       ),
@@ -224,25 +192,14 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                       children: [
                         const Icon(Icons.check_circle, color: Colors.green, size: 20),
                         const SizedBox(width: 8),
-                        const Text(
-                          '최적 경로',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
+                        const Text('최적 경로', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blueAccent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.blueAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
                           child: Text(
                             '총 ${_result!.totalDistanceM.round()}m',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.blueAccent,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontSize: 13, color: Colors.blueAccent, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -254,16 +211,14 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                         runSpacing: 4,
                         children: _result!.orderedStops.asMap().entries.map((e) {
                           final isFirst = e.key == 0;
-                          final isLast  =
-                              e.key == _result!.orderedStops.length - 1;
+                          final isLast = e.key == _result!.orderedStops.length - 1;
                           final Color bg = isFirst
                               ? Colors.green
                               : isLast
-                                  ? Colors.red
-                                  : Colors.orange;
+                              ? Colors.red
+                              : Colors.orange;
                           return Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: bg.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
@@ -271,20 +226,14 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                             ),
                             child: Text(
                               e.value,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: bg,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(fontSize: 11, color: bg, fontWeight: FontWeight.bold),
                             ),
                           );
                         }).toList(),
                       ),
                     ],
                     const SizedBox(height: 14),
-                    ..._result!.segments.asMap().entries.map(
-                      (e) => _segmentTile(e.key, e.value),
-                    ),
+                    ..._result!.segments.asMap().entries.map((e) => _segmentTile(e.key, e.value)),
                   ],
                 ),
               ),
@@ -299,40 +248,16 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                     // 헤더
                     Row(
                       children: [
-                        Icon(
-                          _mapMode == _MapMode.naver
-                              ? Icons.map
-                              : Icons.account_tree_rounded,
-                          color: Colors.blueAccent,
-                          size: 18,
-                        ),
+                        Icon(_mapMode == _MapMode.naver ? Icons.map : Icons.account_tree_rounded, color: Colors.blueAccent, size: 18),
                         const SizedBox(width: 6),
-                        Text(
-                          _mapMode == _MapMode.naver
-                              ? '네이버 지도 기반 시각화'
-                              : '그래프 기반 시각화',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
+                        Text(_mapMode == _MapMode.naver ? '네이버 지도 기반 시각화' : '그래프 기반 시각화', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.blueAccent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.blueAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
                           child: Text(
-                            _mapMode == _MapMode.naver
-                                ? 'Naver Static Maps'
-                                : 'A* 알고리즘',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.blueAccent,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            _mapMode == _MapMode.naver ? 'Naver Static Maps' : 'A* 알고리즘',
+                            style: const TextStyle(fontSize: 10, color: Colors.blueAccent, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -346,13 +271,7 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                         height: 280,
                         child: _mapMode == _MapMode.graph
                             ? _CampusMapPainterWidget(result: _result!)
-                            : _NaverMapView(
-                                fullPath:    _fullPath ?? [],
-                                imageBytes:  _naverImageBytes,
-                                isLoading:   _naverLoading,
-                                errorMsg:    _naverError,
-                                onRetry:     _loadNaverMap,
-                              ),
+                            : _NaverMapView(fullPath: _fullPath ?? [], imageBytes: _naverImageBytes, isLoading: _naverLoading, errorMsg: _naverError, onRetry: _loadNaverMap),
                       ),
                     ),
 
@@ -389,27 +308,11 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
 
                     // 범례 (그래프 모드)
                     if (_mapMode == _MapMode.graph)
-                      Wrap(
-                        spacing: 12,
-                        children: [
-                          _legend(Colors.green,      '출발지'),
-                          _legend(Colors.red,        '도착지'),
-                          _legend(Colors.orange,     '경유지'),
-                          _legend(Colors.blueAccent, '최적 경로'),
-                        ],
-                      ),
+                      Wrap(spacing: 12, children: [_legend(Colors.green, '출발지'), _legend(Colors.red, '도착지'), _legend(Colors.orange, '경유지'), _legend(Colors.blueAccent, '최적 경로')]),
 
                     // 범례 (네이버 모드)
                     if (_mapMode == _MapMode.naver)
-                      Wrap(
-                        spacing: 12,
-                        children: [
-                          _legend(Colors.green,      '출발지'),
-                          _legend(Colors.red,        '도착지'),
-                          _legend(Colors.orange,     '경유지'),
-                          _legend(Colors.blueAccent, '최적 경로'),
-                        ],
-                      ),
+                      Wrap(spacing: 12, children: [_legend(Colors.green, '출발지'), _legend(Colors.red, '도착지'), _legend(Colors.orange, '경유지'), _legend(Colors.blueAccent, '최적 경로')]),
                   ],
                 ),
               ),
@@ -421,16 +324,9 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
     );
   }
 
-  Widget _buildingField(
-    TextEditingController ctrl,
-    String hint,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildingField(TextEditingController ctrl, String hint, IconData icon, Color color) {
     return Autocomplete<String>(
-      optionsBuilder: (v) => v.text.isEmpty
-          ? const []
-          : _buildings.where((b) => b.contains(v.text)),
+      optionsBuilder: (v) => v.text.isEmpty ? const [] : _buildings.where((b) => b.contains(v.text)),
       onSelected: (s) => ctrl.text = s,
       fieldViewBuilder: (ctx, ctrl2, fn, onSubmit) {
         ctrl.addListener(() {
@@ -456,10 +352,7 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: color, width: 1.5),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         );
       },
@@ -476,26 +369,14 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
             Container(
               width: 24,
               height: 24,
-              decoration: const BoxDecoration(
-                color: Colors.blueAccent,
-                shape: BoxShape.circle,
-              ),
+              decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
               alignment: Alignment.center,
               child: Text(
                 '${idx + 1}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ),
-            if (idx < _result!.segments.length - 1)
-              Container(
-                width: 2,
-                height: 32,
-                color: Colors.blueAccent.withValues(alpha: 0.3),
-              ),
+            if (idx < _result!.segments.length - 1) Container(width: 2, height: 32, color: Colors.blueAccent.withValues(alpha: 0.3)),
           ],
         ),
         const SizedBox(width: 12),
@@ -503,17 +384,8 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '${seg.from} → ${seg.to}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              Text(
-                '${seg.distanceM.round()}m  |  ${seg.path.join(' → ')}',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
+              Text('${seg.from} → ${seg.to}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text('${seg.distanceM.round()}m  |  ${seg.path.join(' → ')}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
             ],
           ),
         ),
@@ -546,14 +418,7 @@ class _ModeButton extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _ModeButton({
-    required this.icon,
-    required this.label,
-    required this.sublabel,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
+  const _ModeButton({required this.icon, required this.label, required this.sublabel, required this.selected, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -565,10 +430,7 @@ class _ModeButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.12) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected ? color : Colors.grey.shade300,
-            width: selected ? 1.5 : 1,
-          ),
+          border: Border.all(color: selected ? color : Colors.grey.shade300, width: selected ? 1.5 : 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -580,21 +442,9 @@ class _ModeButton extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: selected ? color : Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: selected ? color : Colors.grey.shade600),
                 ),
-                Text(
-                  sublabel,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: selected
-                        ? color.withValues(alpha: 0.7)
-                        : Colors.grey.shade400,
-                  ),
-                ),
+                Text(sublabel, style: TextStyle(fontSize: 9, color: selected ? color.withValues(alpha: 0.7) : Colors.grey.shade400)),
               ],
             ),
           ],
@@ -615,13 +465,7 @@ class _NaverMapView extends StatelessWidget {
   final String? errorMsg;
   final VoidCallback onRetry;
 
-  const _NaverMapView({
-    required this.fullPath,
-    required this.imageBytes,
-    required this.isLoading,
-    required this.errorMsg,
-    required this.onRetry,
-  });
+  const _NaverMapView({required this.fullPath, required this.imageBytes, required this.isLoading, required this.errorMsg, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -634,10 +478,7 @@ class _NaverMapView extends StatelessWidget {
             children: [
               CircularProgressIndicator(color: Colors.blueAccent),
               SizedBox(height: 12),
-              Text(
-                '네이버 지도 불러오는 중...',
-                style: TextStyle(fontSize: 13, color: Colors.blueAccent),
-              ),
+              Text('네이버 지도 불러오는 중...', style: TextStyle(fontSize: 13, color: Colors.blueAccent)),
             ],
           ),
         ),
@@ -651,8 +492,7 @@ class _NaverMapView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.wifi_off_rounded,
-                  size: 40, color: Colors.red.shade300),
+              Icon(Icons.wifi_off_rounded, size: 40, color: Colors.red.shade300),
               const SizedBox(height: 8),
               Text(
                 errorMsg!,
@@ -684,10 +524,7 @@ class _NaverMapView extends StatelessWidget {
             children: [
               Icon(Icons.map_outlined, size: 40, color: Colors.grey.shade400),
               const SizedBox(height: 8),
-              Text(
-                '지도 이미지를 불러오는 중입니다.',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-              ),
+              Text('지도 이미지를 불러오는 중입니다.', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
             ],
           ),
         ),
@@ -702,20 +539,11 @@ class _NaverMapView extends StatelessWidget {
         return Stack(
           children: [
             // 네이버 지도 이미지
-            Positioned.fill(
-              child: Image.memory(
-                imageBytes!,
-                fit: BoxFit.fill,
-              ),
-            ),
+            Positioned.fill(child: Image.memory(imageBytes!, fit: BoxFit.fill)),
             // 경로 오버레이 (Python: PIL 오버레이에 대응)
             Positioned.fill(
               child: CustomPaint(
-                painter: _NaverOverlayPainter(
-                  fullPath: fullPath,
-                  widgetW: widgetW,
-                  widgetH: widgetH,
-                ),
+                painter: _NaverOverlayPainter(fullPath: fullPath, widgetW: widgetW, widgetH: widgetH),
               ),
             ),
           ],
@@ -738,24 +566,11 @@ class _NaverOverlayPainter extends CustomPainter {
   static const double _imgW = 920;
   static const double _imgH = 920;
 
-  _NaverOverlayPainter({
-    required this.fullPath,
-    required this.widgetW,
-    required this.widgetH,
-  });
+  _NaverOverlayPainter({required this.fullPath, required this.widgetW, required this.widgetH});
 
   /// 위경도 → 위젯 픽셀 (Python: latlon_to_pixel → 위젯 스케일 적용)
-  Offset _toOffset(
-    double lat,
-    double lon,
-    double centerLat,
-    double centerLon,
-  ) {
-    final (px, py) = CampusNavigationService.latLonToPixel(
-      lat, lon, centerLat, centerLon,
-      w: _imgW.toInt(),
-      h: _imgH.toInt(),
-    );
+  Offset _toOffset(double lat, double lon, double centerLat, double centerLon) {
+    final (px, py) = CampusNavigationService.latLonToPixel(lat, lon, centerLat, centerLon, w: _imgW.toInt(), h: _imgH.toInt());
     // 이미지 원본 → 위젯 크기로 스케일
     final x = px * widgetW / _imgW;
     final y = py * widgetH / _imgH;
@@ -767,11 +582,9 @@ class _NaverOverlayPainter extends CustomPainter {
     if (fullPath.isEmpty) return;
 
     final coords = CampusNavigationService.allCoords;
-    final (centerLat, centerLon) =
-        CampusNavigationService.routeCenter(fullPath);
+    final (centerLat, centerLon) = CampusNavigationService.routeCenter(fullPath);
 
-    final validPath =
-        fullPath.where((n) => coords.containsKey(n)).toList();
+    final validPath = fullPath.where((n) => coords.containsKey(n)).toList();
     if (validPath.isEmpty) return;
 
     final offsets = validPath.map((n) {
@@ -797,24 +610,23 @@ class _NaverOverlayPainter extends CustomPainter {
     _drawArrows(canvas, offsets);
 
     // 3) 건물 마커 (P_ 제외) — Python: ellipse 출발=red, 도착=green, 경유=blue
-    final buildingPath =
-        validPath.where((n) => !n.startsWith('P_')).toList();
+    final buildingPath = validPath.where((n) => !n.startsWith('P_')).toList();
 
-    final markerPaint  = Paint()..style = PaintingStyle.fill;
+    final markerPaint = Paint()..style = PaintingStyle.fill;
     final outlinePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < buildingPath.length; i++) {
       final node = buildingPath[i];
-      final c    = coords[node]!;
-      final pt   = _toOffset(c.$1, c.$2, centerLat, centerLon);
+      final c = coords[node]!;
+      final pt = _toOffset(c.$1, c.$2, centerLat, centerLon);
 
       Color color;
       if (i == 0) {
-        color = Colors.green;  // 출발
+        color = Colors.green; // 출발
       } else if (i == buildingPath.length - 1) {
-        color = Colors.red;    // 도착
+        color = Colors.red; // 도착
       } else {
         color = Colors.orange; // 경유
       }
@@ -856,18 +668,18 @@ class _NaverOverlayPainter extends CustomPainter {
       if (len < 10) continue;
 
       final angle = atan2(dy, dx);
-      final mx    = (p1.dx + p2.dx) / 2;
-      final my    = (p1.dy + p2.dy) / 2;
-      const s     = 7.0; // 화살표 크기 (Python: size=8)
+      final mx = (p1.dx + p2.dx) / 2;
+      final my = (p1.dy + p2.dy) / 2;
+      const s = 7.0; // 화살표 크기 (Python: size=8)
 
-      final tip   = Offset(mx + s * cos(angle),            my + s * sin(angle));
-      final left  = Offset(mx - s * cos(angle - pi / 5),   my - s * sin(angle - pi / 5));
-      final right = Offset(mx - s * cos(angle + pi / 5),   my - s * sin(angle + pi / 5));
+      final tip = Offset(mx + s * cos(angle), my + s * sin(angle));
+      final left = Offset(mx - s * cos(angle - pi / 5), my - s * sin(angle - pi / 5));
+      final right = Offset(mx - s * cos(angle + pi / 5), my - s * sin(angle + pi / 5));
 
       canvas.drawPath(
         Path()
-          ..moveTo(tip.dx,   tip.dy)
-          ..lineTo(left.dx,  left.dy)
+          ..moveTo(tip.dx, tip.dy)
+          ..lineTo(left.dx, left.dy)
           ..lineTo(right.dx, right.dy)
           ..close(),
         paint,
@@ -876,10 +688,7 @@ class _NaverOverlayPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _NaverOverlayPainter old) =>
-      old.fullPath != fullPath ||
-      old.widgetW  != widgetW  ||
-      old.widgetH  != widgetH;
+  bool shouldRepaint(covariant _NaverOverlayPainter old) => old.fullPath != fullPath || old.widgetW != widgetW || old.widgetH != widgetH;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -904,16 +713,7 @@ class _CampusMapPainter extends CustomPainter {
   final RouteResult result;
   _CampusMapPainter({required this.result});
 
-  Offset _latLonToOffset(
-    double lat,
-    double lon,
-    double minLat,
-    double maxLat,
-    double minLon,
-    double maxLon,
-    Size size,
-    double padding,
-  ) {
+  Offset _latLonToOffset(double lat, double lon, double minLat, double maxLat, double minLon, double maxLon, Size size, double padding) {
     double mercY(double latDeg) {
       final r = latDeg * pi / 180;
       return log(tan(pi / 4 + r / 2));
@@ -921,23 +721,20 @@ class _CampusMapPainter extends CustomPainter {
 
     final mercMin = mercY(minLat);
     final mercMax = mercY(maxLat);
-    final rangeX  = maxLon - minLon;
+    final rangeX = maxLon - minLon;
     if (rangeX == 0 || (mercMax - mercMin) == 0) {
       return Offset(size.width / 2, size.height / 2);
     }
 
     final x = padding + (lon - minLon) / rangeX * (size.width - padding * 2);
-    final y = padding +
-        (mercMax - mercY(lat)) /
-            (mercMax - mercMin) *
-            (size.height - padding * 2);
+    final y = padding + (mercMax - mercY(lat)) / (mercMax - mercMin) * (size.height - padding * 2);
     return Offset(x, y);
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final coords  = CampusNavigationService.allCoords;
-    final edges   = CampusNavigationService.walkableEdges;
+    final coords = CampusNavigationService.allCoords;
+    final edges = CampusNavigationService.walkableEdges;
     final padding = 24.0;
 
     final lats = coords.values.map((c) => c.$1).toList();
@@ -949,16 +746,11 @@ class _CampusMapPainter extends CustomPainter {
 
     Offset toOff(String node) {
       final c = coords[node]!;
-      return _latLonToOffset(
-          c.$1, c.$2, minLat, maxLat, minLon, maxLon, size, padding);
+      return _latLonToOffset(c.$1, c.$2, minLat, maxLat, minLon, maxLon, size, padding);
     }
 
     // 배경
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height), const Radius.circular(0)),
-      Paint()..color = const Color(0xFFF0F4FF),
-    );
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, size.width, size.height), const Radius.circular(0)), Paint()..color = const Color(0xFFF0F4FF));
 
     // 엣지 (전체)
     final edgePaint = Paint()
@@ -971,13 +763,11 @@ class _CampusMapPainter extends CustomPainter {
     }
 
     // 최적 경로 재구성
-    final graph = CampusNavigationService.buildCampusGraph(
-        coords, CampusNavigationService.walkableEdges);
-    final stops      = result.orderedStops;
-    final routePts   = <Offset>[];
+    final graph = CampusNavigationService.buildCampusGraph(coords, CampusNavigationService.walkableEdges);
+    final stops = result.orderedStops;
+    final routePts = <Offset>[];
     for (int i = 0; i < stops.length - 1; i++) {
-      final (path, _) = CampusNavigationService.aStar(
-          stops[i], stops[i + 1], graph, coords);
+      final (path, _) = CampusNavigationService.aStar(stops[i], stops[i + 1], graph, coords);
       if (path != null) {
         for (int j = (routePts.isEmpty ? 0 : 1); j < path.length; j++) {
           if (coords.containsKey(path[j])) routePts.add(toOff(path[j]));
@@ -994,7 +784,9 @@ class _CampusMapPainter extends CustomPainter {
         ..style = PaintingStyle.stroke;
       final rPath = Path();
       rPath.moveTo(routePts.first.dx, routePts.first.dy);
-      for (final pt in routePts.skip(1)) rPath.lineTo(pt.dx, pt.dy);
+      for (final pt in routePts.skip(1)) {
+        rPath.lineTo(pt.dx, pt.dy);
+      }
       canvas.drawPath(rPath, routePaint);
       _drawArrows(canvas, routePts, Colors.blueAccent);
     }
@@ -1020,8 +812,8 @@ class _CampusMapPainter extends CustomPainter {
       final Color mc = i == 0
           ? Colors.green
           : i == result.orderedStops.length - 1
-              ? Colors.red
-              : Colors.orange;
+          ? Colors.red
+          : Colors.orange;
 
       canvas.drawCircle(pt, 9, Paint()..color = Colors.white);
       canvas.drawCircle(pt, 7, Paint()..color = mc);
@@ -1029,8 +821,7 @@ class _CampusMapPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: node,
-          style: TextStyle(
-              fontSize: 9, color: mc, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 9, color: mc, fontWeight: FontWeight.bold),
         ),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: 80);
@@ -1039,7 +830,9 @@ class _CampusMapPainter extends CustomPainter {
   }
 
   void _drawArrows(Canvas canvas, List<Offset> points, Color color) {
-    final paint = Paint()..color = color..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
     for (int i = 0; i < points.length - 1; i++) {
       final p1 = points[i];
       final p2 = points[i + 1];
