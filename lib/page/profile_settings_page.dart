@@ -100,62 +100,159 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     final n = TextEditingController(text: _profile.name),
         d = TextEditingController(text: _profile.department),
         id = TextEditingController(text: _profile.studentId),
-        g = TextEditingController(text: _profile.grade);
+        g = TextEditingController(text: _profile.grade),
+        gpa = TextEditingController(
+          text: _profile.gpa != null ? _profile.gpa!.toString() : '',
+        );
+    int? incomeBracket = _profile.incomeBracket;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          '내 정보 수정',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _editF('이름', n, Icons.person_outline),
-              const SizedBox(height: 12),
-              _editF('학과', d, Icons.school_outlined),
-              const SizedBox(height: 12),
-              _editF('학번', id, Icons.badge_outlined),
-              const SizedBox(height: 12),
-              _editF('학년', g, Icons.bar_chart_outlined),
-            ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const Text(
+            '내 정보 수정',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('취소', style: TextStyle(color: Colors.grey.shade600)),
-          ),
-          FilledButton(
-            onPressed: () {
-              final u = _profile.copyWith(
-                name: n.text.trim(),
-                department: d.text.trim(),
-                studentId: id.text.trim(),
-                grade: g.text.trim(),
-              );
-              setState(() => _profile = u);
-              widget.onProfileChanged(u);
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.indigo,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 필수 항목
+                _sectionChip('필수', Colors.indigo),
+                const SizedBox(height: 10),
+                _editF('이름', n, Icons.person_outline),
+                const SizedBox(height: 12),
+                _editF('학과', d, Icons.school_outlined),
+                const SizedBox(height: 12),
+                _editF('학번', id, Icons.badge_outlined),
+                const SizedBox(height: 12),
+                _editF('학년', g, Icons.bar_chart_outlined),
+                const SizedBox(height: 18),
+                // 선택 항목
+                _sectionChip('선택', Colors.grey),
+                const SizedBox(height: 10),
+                _editF('학점 (GPA)', gpa, Icons.grade_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true)),
+                const SizedBox(height: 12),
+                // 소득분위
+                Row(
+                  children: [
+                    const Icon(Icons.account_balance_wallet_outlined,
+                        size: 18, color: Colors.indigo),
+                    const SizedBox(width: 8),
+                    const Text('소득분위',
+                        style: TextStyle(fontSize: 13, color: Colors.black87)),
+                    const Spacer(),
+                    if (incomeBracket != null)
+                      Text('$incomeBracket분위',
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: List.generate(10, (i) {
+                    final b = i + 1;
+                    final sel = incomeBracket == b;
+                    return GestureDetector(
+                      onTap: () => setDialogState(
+                          () => incomeBracket = sel ? null : b),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        width: 36,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: sel ? Colors.indigo : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: sel
+                                ? Colors.indigo
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$b',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: sel ? Colors.white : Colors.grey.shade600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
             ),
-            child: const Text('저장'),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('취소', style: TextStyle(color: Colors.grey.shade600)),
+            ),
+            FilledButton(
+              onPressed: () {
+                final parsedGpa = double.tryParse(gpa.text.trim());
+                final u = _profile.copyWith(
+                  name: n.text.trim(),
+                  department: d.text.trim(),
+                  studentId: id.text.trim(),
+                  grade: g.text.trim(),
+                  gpa: gpa.text.trim().isEmpty ? null : parsedGpa,
+                  incomeBracket: incomeBracket,
+                );
+                setState(() => _profile = u);
+                widget.onProfileChanged(u);
+                Navigator.pop(ctx);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.indigo,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('저장'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _editF(String label, TextEditingController ctrl, IconData icon) =>
+  Widget _sectionChip(String label, Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 11,
+        color: color,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
+
+  Widget _editF(
+    String label,
+    TextEditingController ctrl,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+  }) =>
       TextField(
         controller: ctrl,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, size: 20, color: Colors.indigo),
@@ -389,8 +486,23 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                       Icons.bar_chart_outlined,
                       '학년',
                       _profile.grade,
-                      isLast: true,
+                      isLast: _profile.gpa == null &&
+                          _profile.incomeBracket == null,
                     ),
+                    if (_profile.gpa != null)
+                      _infoR(
+                        Icons.grade_outlined,
+                        '학점',
+                        _profile.gpa!.toStringAsFixed(2),
+                        isLast: _profile.incomeBracket == null,
+                      ),
+                    if (_profile.incomeBracket != null)
+                      _infoR(
+                        Icons.account_balance_wallet_outlined,
+                        '소득분위',
+                        '${_profile.incomeBracket}분위',
+                        isLast: true,
+                      ),
                   ],
                 ),
               ),
@@ -478,7 +590,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         Icon(icon, size: 18, color: Colors.grey.shade400),
         const SizedBox(width: 12),
         SizedBox(
-          width: 44,
+          width: 56,
           child: Text(
             label,
             style: TextStyle(fontSize: 13, color: Colors.grey.shade500),

@@ -57,12 +57,16 @@ class Student {
 
 class UserProfile {
   String name, department, studentId, grade;
+  double? gpa;           // 선택: 학점 (0.0 ~ 4.5)
+  int? incomeBracket;    // 선택: 소득분위 (1 ~ 10)
 
   UserProfile({
     this.name = '홍길동',
     this.department = '컴퓨터공학과',
     this.studentId = '202220222',
     this.grade = '3학년',
+    this.gpa,
+    this.incomeBracket,
   });
 
   factory UserProfile.fromStudent(Student student) {
@@ -70,6 +74,8 @@ class UserProfile {
       name: student.name,
       department: student.major,
       studentId: student.loginId,
+      gpa: student.gpa != 0.0 ? student.gpa : null,
+      incomeBracket: student.incomeBracket != 0 ? student.incomeBracket : null,
     );
   }
 
@@ -78,10 +84,19 @@ class UserProfile {
     String? department,
     String? studentId,
     String? grade,
+    Object? gpa = _sentinel,
+    Object? incomeBracket = _sentinel,
   }) => UserProfile(
     name: name ?? this.name,
     department: department ?? this.department,
     studentId: studentId ?? this.studentId,
     grade: grade ?? this.grade,
+    gpa: identical(gpa, _sentinel) ? this.gpa : gpa as double?,
+    incomeBracket: identical(incomeBracket, _sentinel)
+        ? this.incomeBracket
+        : incomeBracket as int?,
   );
 }
+
+// nullable 필드를 null로 명시적으로 지울 수 있게 하는 sentinel 값
+const Object _sentinel = Object();

@@ -127,6 +127,9 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
               MaterialPageRoute(
                 builder: (_) => StudyRoomReservationHistoryPage(
                   reservations: myReservations,
+                  onCancel: (cancelled) {
+                    setState(() => myReservations.remove(cancelled));
+                  },
                 ),
               ),
             ),

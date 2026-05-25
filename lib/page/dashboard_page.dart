@@ -10,18 +10,26 @@ import 'scholarship_page.dart';
 import 'study_room_page.dart';
 
 class MainDashboardPage extends StatefulWidget {
-  const MainDashboardPage({super.key});
+  final UserProfile? initialProfile;
+  final XFile? initialProfileImage;
+  const MainDashboardPage({
+    super.key,
+    this.initialProfile,
+    this.initialProfileImage,
+  });
   @override
   State<MainDashboardPage> createState() => _MainDashboardPageState();
 }
 
 class _MainDashboardPageState extends State<MainDashboardPage> {
-  UserProfile _profile = UserProfile();
+  late UserProfile _profile;
   XFile? _profileImage;
 
   @override
   void initState() {
     super.initState();
+    _profile = widget.initialProfile ?? UserProfile();
+    _profileImage = widget.initialProfileImage;
   }
 
   @override

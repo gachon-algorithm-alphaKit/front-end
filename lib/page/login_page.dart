@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'dashboard_page.dart';
+import 'additional_info_page.dart';
 
 // 지원 대학교 목록
 const List<String> kSupportedUniversities = [
@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const MainDashboardPage()),
+      MaterialPageRoute(builder: (_) => const AdditionalInfoPage()),
     );
   }
 
