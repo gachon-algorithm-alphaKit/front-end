@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../api/scholarship_service.dart';
 import '../component/common_widgets.dart';
 import '../model/scholarship_model.dart';
+import '../model/user_profile.dart';
 
 class ScholarshipPage extends StatefulWidget {
-  const ScholarshipPage({super.key});
+  final UserProfile profile;
+  const ScholarshipPage({super.key, required this.profile});
   @override
   State<ScholarshipPage> createState() => _ScholarshipPageState();
 }
@@ -20,9 +22,9 @@ String _amountLabel(int amount) {
 }
 
 class _ScholarshipPageState extends State<ScholarshipPage> {
-  // TODO: 학생 정보는 로그인된 사용자의 실제 데이터로 교체
-  double _gpa = 3.8;
-  int _grade = 3, _incomeLevel = 5;
+  late double _gpa;
+  late int _grade;
+  late int _incomeLevel;
   bool _awardedLastSemester = false; // 직전 학기 수여 여부
   int _minAmount = 0; // 최소 장학금 금액 필터 (0 = 제한없음)
   List<Scholarship> _scholarships = [];
@@ -32,6 +34,9 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
   @override
   void initState() {
     super.initState();
+    _gpa = widget.profile.gpa ?? 3.0;
+    _grade = int.tryParse(widget.profile.grade[0]) ?? 1;
+    _incomeLevel = widget.profile.incomeBracket ?? 5;
     _load();
   }
 

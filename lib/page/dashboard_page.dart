@@ -103,7 +103,7 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
       case 3:
         return const LostFoundPage();
       case 4:
-        return const ScholarshipPage();
+        return ScholarshipPage(profile: _profile);
       default:
         return const CampusNavigationPage();
     }

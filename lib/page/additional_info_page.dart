@@ -337,7 +337,6 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             controller: _nameCtrl,
                             label: '이름',
                             icon: Icons.person_outline_rounded,
-                            hint: '홍길동',
                             validator: (v) => v == null || v.trim().isEmpty
                                 ? '이름을 입력해주세요.'
                                 : null,
@@ -347,7 +346,6 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             controller: _studentIdCtrl,
                             label: '학번',
                             icon: Icons.badge_outlined,
-                            hint: '202220222',
                             keyboardType: TextInputType.number,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
@@ -361,7 +359,6 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             controller: _departmentCtrl,
                             label: '학과',
                             icon: Icons.school_outlined,
-                            hint: '컴퓨터공학과',
                             validator: (v) => v == null || v.trim().isEmpty
                                 ? '학과를 입력해주세요.'
                                 : null,
@@ -379,7 +376,6 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             controller: _gpaCtrl,
                             label: '학점 (GPA)',
                             icon: Icons.grade_outlined,
-                            hint: '4.5',
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
