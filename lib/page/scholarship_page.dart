@@ -10,11 +10,21 @@ class ScholarshipPage extends StatefulWidget {
   State<ScholarshipPage> createState() => _ScholarshipPageState();
 }
 
+// 최소 장학금 금액 선택지 (원 단위, 0 = 제한없음)
+const List<int> kMinAmountOptions = [0, 500000, 1000000, 2000000, 3000000];
+
+String _amountLabel(int amount) {
+  if (amount == 0) return '제한없음';
+  final man = amount ~/ 10000;
+  return '$man만원 이상';
+}
+
 class _ScholarshipPageState extends State<ScholarshipPage> {
   // TODO: 학생 정보는 로그인된 사용자의 실제 데이터로 교체
   double _gpa = 3.8;
   int _grade = 3, _incomeLevel = 5;
   bool _awardedLastSemester = false; // 직전 학기 수여 여부
+  int _minAmount = 0; // 최소 장학금 금액 필터 (0 = 제한없음)
   List<Scholarship> _scholarships = [];
   bool _isLoading = false;
   String _filter = '전체';
@@ -36,20 +46,25 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
   }
 
   List<Scholarship> get _filtered {
+    // 최소 금액 필터 먼저 적용
+    final byAmount = _minAmount == 0
+        ? _scholarships
+        : _scholarships.where((s) => s.amount >= _minAmount).toList();
+
     switch (_filter) {
       case '적합':
-        return _scholarships.where((s) => s.score >= 80).toList();
+        return byAmount.where((s) => s.score >= 80).toList();
       case '확인필요':
-        return _scholarships
+        return byAmount
             .where((s) => s.score >= 60 && s.score < 80)
             .toList();
       case '마감임박':
-        return _scholarships.where((s) {
+        return byAmount.where((s) {
           final d = ScholarshipService.daysLeft(s.deadline);
           return d >= 0 && d <= 7;
         }).toList();
       default:
-        return _scholarships;
+        return byAmount;
     }
   }
 
@@ -122,6 +137,13 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                     _infoChip('학년', '$_grade학년', Colors.indigo),
                     const SizedBox(width: 8),
                     _infoChip('소득분위', '$_incomeLevel분위', Colors.orange),
+                    const SizedBox(width: 8),
+                    if (_minAmount > 0)
+                      _infoChip(
+                        '최소금액',
+                        '${_minAmount ~/ 10000}만↑',
+                        Colors.deepPurple,
+                      ),
                     const Spacer(),
                     TextButton(
                       onPressed: () => _showInfoEdit(),
@@ -441,6 +463,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
     double gpa = _gpa;
     int grade = _grade, income = _incomeLevel;
     bool awarded = _awardedLastSemester;
+    int minAmount = _minAmount;
     final gpaCtrl = TextEditingController(text: gpa.toStringAsFixed(1));
 
     showDialog(
@@ -673,6 +696,59 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                // 최소 장학금 금액 필터
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '최소 장학금 금액',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: kMinAmountOptions.map((amt) {
+                    final selected = minAmount == amt;
+                    return GestureDetector(
+                      onTap: () => set(() => minAmount = amt),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? Colors.teal.shade600
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: selected
+                                ? Colors.teal.shade600
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Text(
+                          _amountLabel(amt),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: selected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: selected
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
@@ -688,6 +764,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                   _grade = grade;
                   _incomeLevel = income;
                   _awardedLastSemester = awarded;
+                  _minAmount = minAmount;
                 });
                 Navigator.pop(ctx);
                 _load();
