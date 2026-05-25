@@ -410,8 +410,8 @@ class CampusNavigationService {
   static const String _clientId     = '892iyj75cq';
   static const String _clientSecret = 'ZiJpxXhpGaKwbJVRX5intB1I83C4Z3n314qZosD0';
   static const int    _mapLevel     = 16;
-  static const int    _imgW         = 900;
-  static const int    _imgH         = 700;
+  static const int    _imgW         = 1024;
+  static const int    _imgH         = 1024;
 
   /// 네이버 Static Maps API에서 지도 이미지를 받아 PNG 바이트로 반환합니다.
   static Future<Uint8List?> fetchNaverStaticMap(

@@ -404,10 +404,10 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                       Wrap(
                         spacing: 12,
                         children: [
-                          _legend(Colors.red,        '출발지'),
-                          _legend(Colors.green,      '도착지'),
-                          _legend(Colors.blue,       '경유지'),
-                          _legend(const Color(0xFF1E64FF), '경로 선'),
+                          _legend(Colors.green,      '출발지'),
+                          _legend(Colors.red,        '도착지'),
+                          _legend(Colors.orange,     '경유지'),
+                          _legend(Colors.blueAccent, '최적 경로'),
                         ],
                       ),
                   ],
@@ -735,8 +735,8 @@ class _NaverOverlayPainter extends CustomPainter {
   final double widgetH;
 
   // 네이버 API 이미지 원본 크기
-  static const double _imgW = 900;
-  static const double _imgH = 700;
+  static const double _imgW = 920;
+  static const double _imgH = 920;
 
   _NaverOverlayPainter({
     required this.fullPath,
@@ -781,7 +781,7 @@ class _NaverOverlayPainter extends CustomPainter {
 
     // 1) 경로 선 (Python: draw.line LINE_COLOR)
     final linePaint = Paint()
-      ..color = const Color(0xC81E64FF)
+      ..color = Colors.blueAccent.withValues(alpha: 0.85)
       ..strokeWidth = 4.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -812,11 +812,11 @@ class _NaverOverlayPainter extends CustomPainter {
 
       Color color;
       if (i == 0) {
-        color = Colors.red;    // 출발 (Python: "red")
+        color = Colors.green;  // 출발
       } else if (i == buildingPath.length - 1) {
-        color = Colors.green;  // 도착 (Python: "green")
+        color = Colors.red;    // 도착
       } else {
-        color = Colors.blue;   // 경유 (Python: "blue")
+        color = Colors.orange; // 경유
       }
 
       // 흰 외곽

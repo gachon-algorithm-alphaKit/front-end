@@ -74,10 +74,15 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      Icons.school_rounded,
-                      size: 56,
-                      color: Colors.indigo,
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/icon/alphakit.png',
+                          width: 64,
+                          height: 64,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
