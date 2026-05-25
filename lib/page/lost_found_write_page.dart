@@ -22,7 +22,6 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
   late final TextEditingController _itemNameCtrl;
   late final TextEditingController _descriptionCtrl;
   late final TextEditingController _locationCtrl;
-  late final TextEditingController _contactCtrl;
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
   XFile? _imageFile;
@@ -38,7 +37,6 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
     _itemNameCtrl = TextEditingController(text: p?.itemName ?? '');
     _descriptionCtrl = TextEditingController(text: p?.description ?? '');
     _locationCtrl = TextEditingController(text: p?.location ?? '');
-    _contactCtrl = TextEditingController(text: p?.contact ?? '');
     _isAnonymous = p?.isAnonymous ?? false;
     if (p?.imagePath != null) _imageFile = XFile(p!.imagePath!);
   }
@@ -48,7 +46,6 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
     _itemNameCtrl.dispose();
     _descriptionCtrl.dispose();
     _locationCtrl.dispose();
-    _contactCtrl.dispose();
     super.dispose();
   }
 
@@ -168,22 +165,23 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
             itemName: _itemNameCtrl.text.trim(),
             description: _descriptionCtrl.text.trim(),
             location: _locationCtrl.text.trim(),
-            contact: _isAnonymous ? '' : _contactCtrl.text.trim(),
             isAnonymous: _isAnonymous,
             imagePath: _imageFile?.path,
             clearImage: _imageFile == null,
           )
-        : LostFoundPost(
-            id: 'P${DateTime.now().millisecondsSinceEpoch}',
-            itemName: _itemNameCtrl.text.trim(),
+        : LostItemPost(
+            itemId: DateTime.now().millisecondsSinceEpoch,
+            schoolId: 1,
+            placeId: null,
+            studentId: 1,
+            title: _itemNameCtrl.text.trim(),
+            category: _locationCtrl.text.trim(),
             description: _descriptionCtrl.text.trim(),
-            location: _locationCtrl.text.trim(),
-            contact: _isAnonymous ? '' : _contactCtrl.text.trim(),
             isAnonymous: _isAnonymous,
-            imagePath: _imageFile?.path,
-            date: () {
+            imgFilePath: _imageFile?.path ?? '',
+            createTime: () {
               final now = DateTime.now();
-              return "${now.year}.${now.month.toString().padLeft(2, "0")}.${now.day.toString().padLeft(2, "0")}";
+              return "${now.year}-${now.month.toString().padLeft(2, "0")}-${now.day.toString().padLeft(2, "0")}";
             }(),
           );
     widget.onSubmit(post);
@@ -268,19 +266,6 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                             ? '분실 장소를 입력해주세요'
                             : null,
                       ),
-                      const SizedBox(height: 16),
-                      buildSectionLabel('연락처'),
-                      TextFormField(
-                        controller: _contactCtrl,
-                        keyboardType: TextInputType.phone,
-                        enabled: !_isAnonymous,
-                        decoration: _inputDeco(
-                          _isAnonymous ? '익명 선택 시 연락처가 숨겨집니다' : '010-0000-0000',
-                          Icons.phone_outlined,
-                          disabled: _isAnonymous,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
                       // ── 사진 첨부 ──────────────────────────────────────
                       buildSectionLabel('사진 첨부 (선택, 1장)'),
                       GestureDetector(
@@ -397,7 +382,6 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                       GestureDetector(
                         onTap: () => setState(() {
                           _isAnonymous = !_isAnonymous;
-                          if (_isAnonymous) _contactCtrl.clear();
                         }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
@@ -459,7 +443,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '선택 시 이름과 연락처가 공개되지 않습니다',
+                                    '선택 시 작성자 정보가 공개되지 않습니다',
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: Colors.grey.shade500,

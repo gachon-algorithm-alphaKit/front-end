@@ -56,7 +56,7 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
   Future<void> _reserve(RoomRecommendation rec) async {
     // TODO: StudyRoomService.reserve → Bitset OR 예약 확정
     final ok = await StudyRoomService.reserve(
-      rec.room.id,
+      rec.room.roomId,
       _date,
       _startHour,
       _endHour,
@@ -67,7 +67,7 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
         StudyRoomReservation(
           id: 'R${DateTime.now().millisecondsSinceEpoch}',
           roomName: rec.room.name,
-          location: rec.room.location,
+          location: StudyRoomService.locationFor(rec.room),
           date:
               "${_date.year}.${_date.month.toString().padLeft(2, "0")}.${_date.day.toString().padLeft(2, "0")}",
           startHour: _startHour,
@@ -511,13 +511,13 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${rec.room.location} · ${rec.room.capacity}인실',
+                  '${StudyRoomService.locationFor(rec.room)} · ${rec.room.capacity}인실',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 4,
-                  children: rec.room.facilities
+                  children: rec.room.facilityList
                       .map(
                         (f) => Chip(
                           label: Text(f, style: const TextStyle(fontSize: 10)),

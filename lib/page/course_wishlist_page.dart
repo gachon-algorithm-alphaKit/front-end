@@ -4,8 +4,8 @@ import '../api/course_service.dart';
 import '../model/course_model.dart';
 
 class CourseWishlistPage extends StatefulWidget {
-  final Set<String> wishlistIds;
-  final ValueChanged<String> onToggle;
+  final Set<int> wishlistIds;
+  final ValueChanged<int> onToggle;
   const CourseWishlistPage({
     super.key,
     required this.wishlistIds,
@@ -18,10 +18,10 @@ class CourseWishlistPage extends StatefulWidget {
 class _CourseWishlistPageState extends State<CourseWishlistPage> {
   // 모든 강의 목록에서 찜한 것만 필터
   List<Course> get _wished => CourseService.allCourses
-      .where((c) => widget.wishlistIds.contains(c.id))
+      .where((c) => widget.wishlistIds.contains(c.courseId))
       .toList();
 
-  void _toggle(String id) {
+  void _toggle(int id) {
     widget.onToggle(id);
     setState(() {});
   }
@@ -96,30 +96,30 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        c.credit,
+                        c.courseCode,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.amber.shade800,
-                          fontSize: 13,
+                          fontSize: 11,
                         ),
                       ),
                     ),
                     title: Text(
-                      c.name,
+                      c.courseName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
                     ),
                     subtitle: Text(
-                      '${c.professor} | ${c.department} | ${c.classTime}',
+                      '${CourseService.professorNameFor(c)} | ${c.majorTerm} | ${c.classTimeLabel}',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
                       ),
                     ),
                     trailing: GestureDetector(
-                      onTap: () => _toggle(c.id),
+                      onTap: () => _toggle(c.courseId),
                       child: const Icon(
                         Icons.favorite_rounded,
                         color: Colors.redAccent,
@@ -129,21 +129,19 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
                     children: [
                       const Divider(height: 1),
                       const SizedBox(height: 12),
-                      if (c.planSummary != null) ...[
-                        Text(
-                          '강의 계획 요약',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                          ),
+                      Text(
+                        '강의 계획 요약',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          c.planSummary!,
-                          style: const TextStyle(fontSize: 13, height: 1.5),
-                        ),
-                      ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        c.description,
+                        style: const TextStyle(fontSize: 13, height: 1.5),
+                      ),
                     ],
                   ),
                 );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'page/dashboard_page.dart';
+import 'page/login_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +25,6 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
       useMaterial3: true,
     ),
-    home: const MainDashboardPage(),
+    home: const LoginPage(),
   );
 }

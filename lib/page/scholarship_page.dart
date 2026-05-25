@@ -276,7 +276,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
           children: [
             Expanded(
               child: Text(
-                s.title,
+                s.name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
@@ -309,12 +309,12 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
           child: Row(
             children: [
               Text(
-                s.organization,
+                s.organization ?? '가천대학교',
                 style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
               ),
               const SizedBox(width: 8),
               Text(
-                s.amount,
+                s.amountLabel,
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.teal.shade700,
@@ -328,26 +328,26 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
           const Divider(height: 1),
           const SizedBox(height: 12),
           // 지원 조건
-          if (s.requiredGpa != null)
+          if (s.requiredGpa > 0)
             _condRow(
               Icons.grade_outlined,
               '학점 조건',
               '${s.requiredGpa} 이상',
-              _gpa >= s.requiredGpa! ? Colors.green : Colors.red,
+              _gpa >= s.requiredGpa ? Colors.green : Colors.red,
             ),
-          if (s.requiredIncomeLevel != null)
+          if (s.requiredIncomeBracket < 10)
             _condRow(
               Icons.account_balance_outlined,
               '소득분위',
-              '${s.requiredIncomeLevel}분위 이하',
-              _incomeLevel <= s.requiredIncomeLevel!
+              '${s.requiredIncomeBracket}분위 이하',
+              _incomeLevel <= s.requiredIncomeBracket
                   ? Colors.green
                   : Colors.red,
             ),
           _condRow(
             Icons.event_outlined,
             '마감일',
-            s.deadline,
+            s.deadline ?? '미정',
             days >= 0 ? Colors.black87 : Colors.grey,
           ),
           if (s.detail != null) ...[
@@ -383,7 +383,9 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                 child: FilledButton.icon(
                   onPressed: () async {
                     // TODO: ScholarshipService.getApplyUrl → 외부 신청 페이지
-                    final url = await ScholarshipService.getApplyUrl(s.id);
+                    final url = await ScholarshipService.getApplyUrl(
+                      s.scholarshipId,
+                    );
                     if (url != null) openUrl(url);
                   },
                   icon: const Icon(Icons.open_in_new, size: 16),

@@ -276,7 +276,7 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
   }
 
   Widget _courseCard(Course c) {
-    final isWished = wishlistCourseIds.contains(c.id);
+    final isWished = wishlistCourseIds.contains(c.courseId);
     return Card(
       elevation: 0,
       color: Colors.white,
@@ -296,28 +296,28 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
           ),
           alignment: Alignment.center,
           child: Text(
-            c.credit,
+            c.courseCode,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.amber.shade800,
-              fontSize: 13,
+              fontSize: 11,
             ),
           ),
         ),
         title: Text(
-          c.name,
+          c.courseName,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: Text(
-          '${c.professor} | ${c.department} | ${c.classTime}',
+          '${CourseService.professorNameFor(c)} | ${c.majorTerm} | ${c.classTimeLabel}',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
         trailing: GestureDetector(
           onTap: () => setState(() {
             if (isWished) {
-              wishlistCourseIds.remove(c.id);
+              wishlistCourseIds.remove(c.courseId);
             } else {
-              wishlistCourseIds.add(c.id);
+              wishlistCourseIds.add(c.courseId);
             }
           }),
           child: AnimatedSwitcher(
@@ -333,22 +333,19 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
         children: [
           const Divider(height: 1),
           const SizedBox(height: 12),
-          if (c.planSummary != null) ...[
-            Text(
-              '강의 계획 요약',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                color: Colors.grey.shade700,
-              ),
+          Text(
+            '강의 계획 요약',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: Colors.grey.shade700,
             ),
-            const SizedBox(height: 6),
-            Text(
-              c.planSummary!,
-              style: const TextStyle(fontSize: 13, height: 1.5),
-            ),
-          ],
-          // TODO: c.syllabusUrl → 강의계획서 PDF 열기
+          ),
+          const SizedBox(height: 6),
+          Text(
+            c.description,
+            style: const TextStyle(fontSize: 13, height: 1.5),
+          ),
         ],
       ),
     );

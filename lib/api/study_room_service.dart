@@ -1,21 +1,14 @@
+import '../model/route_model.dart';
 import '../model/study_room_model.dart';
 
 class StudyRoomService {
-  // ─────────────────────────────────────────────────────────
   // TODO: GET /api/studyrooms
-  //   Response: List<StudyRoom>
-  // ─────────────────────────────────────────────────────────
   static Future<List<StudyRoom>> fetchRooms() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return _mockRooms;
   }
 
-  // ─────────────────────────────────────────────────────────
   // TODO: POST /api/studyrooms/recommend
-  //   Body: { date, startHour, endHour, capacity, facilities[] }
-  //   Response: { recommendations: List<RoomRecommendation>, isSplit: bool }
-  //   서버: Bitset 충돌검사 → PriorityQueue 점수화 → Backtracking 분할
-  // ─────────────────────────────────────────────────────────
   static Future<List<RoomRecommendation>> recommend(
     DateTime date,
     int startHour,
@@ -24,14 +17,14 @@ class StudyRoomService {
     List<String> facilities,
   ) async {
     await Future.delayed(const Duration(milliseconds: 600));
-    // MOCK: 적합도 점수 계산 (실제: Bitset + PriorityQueue)
+
     final results = <RoomRecommendation>[];
     for (final room in _mockRooms) {
       double score = 100;
-      score -= (room.capacity - capacity).abs() * 5.0; // 인원 패널티
+      score -= (room.capacity - capacity).abs() * 5.0;
       for (final f in facilities) {
-        if (room.facilities.contains(f)) {
-          score += 10; // 시설 가산점
+        if (room.facilityList.contains(f)) {
+          score += 10;
         }
       }
       if (score > 0) {
@@ -42,57 +35,95 @@ class StudyRoomService {
     return results.take(3).toList();
   }
 
-  // ─────────────────────────────────────────────────────────
   // TODO: POST /api/studyrooms/reserve
-  //   Body: { roomId, date, startHour, endHour, userId }
-  //   Response: { success, reservationId }
-  //   서버: Bitset OR 연산으로 예약 확정
-  // ─────────────────────────────────────────────────────────
   static Future<bool> reserve(
-    String roomId,
+    int roomId,
     DateTime date,
     int startHour,
     int endHour,
   ) async {
     await Future.delayed(const Duration(milliseconds: 400));
-    return true; // MOCK
+    return true;
   }
 
-  static final _mockRooms = <StudyRoom>[
-    const StudyRoom(
-      id: 'R01',
+  static String locationFor(StudyRoom room) {
+    return _mockPlaces
+        .firstWhere(
+          (place) => place.placeId == room.placeId,
+          orElse: () => const Place(
+            placeId: 0,
+            schoolId: 1,
+            name: '위치 미정',
+            placeType: 'unknown',
+            latitude: 0,
+            longitude: 0,
+          ),
+        )
+        .name;
+  }
+
+  static const _mockPlaces = <Place>[
+    Place(
+      placeId: 2,
+      schoolId: 1,
+      name: '비전타워 3층',
+      placeType: 'study_room_area',
+      latitude: 37.4499,
+      longitude: 127.1281,
+    ),
+    Place(
+      placeId: 5,
+      schoolId: 1,
+      name: 'AI도서관 2층',
+      placeType: 'study_room_area',
+      latitude: 37.4496,
+      longitude: 127.1278,
+    ),
+    Place(
+      placeId: 1,
+      schoolId: 1,
+      name: '가천관 5층',
+      placeType: 'study_room_area',
+      latitude: 37.4491,
+      longitude: 127.1273,
+    ),
+  ];
+
+  static const _mockRooms = <StudyRoom>[
+    StudyRoom(
+      roomId: 1,
+      placeId: 2,
       name: '스터디룸 A',
-      location: '비전타워 3층',
       capacity: 6,
-      facilities: ['TV', '화이트보드', 'HDMI'],
+      facilities: 'TV,화이트보드,HDMI',
     ),
-    const StudyRoom(
-      id: 'R02',
+    StudyRoom(
+      roomId: 2,
+      placeId: 2,
       name: '스터디룸 B',
-      location: '비전타워 3층',
       capacity: 4,
-      facilities: ['화이트보드'],
+      facilities: '화이트보드',
     ),
-    const StudyRoom(
-      id: 'R03',
+    StudyRoom(
+      roomId: 3,
+      placeId: 5,
       name: '스터디룸 C',
-      location: 'AI도서관 2층',
       capacity: 10,
-      facilities: ['TV', '빔프로젝터', '화이트보드'],
+      facilities: 'TV,빔프로젝터,화이트보드',
     ),
-    const StudyRoom(
-      id: 'R04',
+    StudyRoom(
+      roomId: 4,
+      placeId: 5,
       name: '스터디룸 D',
-      location: 'AI도서관 2층',
       capacity: 4,
-      facilities: ['화이트보드', 'HDMI'],
+      facilities: '화이트보드,HDMI',
     ),
-    const StudyRoom(
-      id: 'R05',
+    StudyRoom(
+      roomId: 5,
+      placeId: 1,
       name: '스터디룸 E',
-      location: '가천관 5층',
       capacity: 8,
-      facilities: ['TV', '화이트보드'],
+      facilities: 'TV,화이트보드',
     ),
   ];
 }

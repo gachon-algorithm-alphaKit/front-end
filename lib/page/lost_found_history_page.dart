@@ -188,22 +188,6 @@ class _LostFoundHistoryPageState extends State<LostFoundHistoryPage> {
                                   color: Colors.grey.shade600,
                                 ),
                               ),
-                              if (post.contact.isNotEmpty) ...[
-                                const SizedBox(width: 10),
-                                Icon(
-                                  Icons.phone_outlined,
-                                  size: 13,
-                                  color: Colors.grey.shade500,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  post.contact,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                         ],

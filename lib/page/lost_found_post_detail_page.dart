@@ -319,9 +319,7 @@ class _LostFoundPostDetailPageState extends State<LostFoundPostDetailPage> {
                         Icons.visibility_off_outlined,
                         '공개 여부',
                         '익명 게시글',
-                      )
-                    else if (_post.contact.isNotEmpty)
-                      _detailRow(Icons.phone_outlined, '연락처', _post.contact),
+                      ),
                   ],
                 ),
               ),

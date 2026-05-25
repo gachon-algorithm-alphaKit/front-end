@@ -307,7 +307,7 @@ class _LostFoundPageState extends State<LostFoundPage> {
                   TextButton(
                     onPressed: () async {
                       // TODO: LostFoundService.claimItem → 분실물 수령 신청
-                      await LostFoundService.claimItem(item.id);
+                      await LostFoundService.claimItem(item.itemId);
                       if (!mounted) {
                         return;
                       }

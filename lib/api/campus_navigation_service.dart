@@ -3,42 +3,116 @@ import 'dart:math';
 import '../model/route_model.dart';
 
 class CampusNavigationService {
-  // ─────────────────────────────────────────────────────────
-  // 실제 건물 목록: 백엔드 API 또는 로컬 JSON에서 로드
-  // TODO: GET /api/campus/buildings → List<Building>
-  // ─────────────────────────────────────────────────────────
-  static const buildings = <Building>[
-    Building(name: '가천관', alias: '가천관', lat: 37.4491, lng: 127.1273),
-    Building(name: '비전타워', alias: '비전', lat: 37.4499, lng: 127.1281),
-    Building(name: '공과대학1관', alias: '공대1', lat: 37.4483, lng: 127.1265),
-    Building(name: '공과대학2관', alias: '공대2', lat: 37.4480, lng: 127.1270),
-    Building(name: 'AI도서관', alias: '도서관', lat: 37.4496, lng: 127.1278),
-    Building(name: '제1학생생활관', alias: '기숙사1', lat: 37.4473, lng: 127.1255),
-    Building(name: '제3학생생활관', alias: '기숙사3', lat: 37.4469, lng: 127.1260),
-    Building(name: '교육대학원', alias: '교육대학원', lat: 37.4487, lng: 127.1290),
-    Building(name: '학생회관', alias: '학생회관', lat: 37.4492, lng: 127.1262),
-    Building(name: '의과대학', alias: '의대', lat: 37.4502, lng: 127.1295),
-    Building(name: '약학대학', alias: '약대', lat: 37.4497, lng: 127.1268),
-    Building(name: 'IT대학', alias: 'IT관', lat: 37.4485, lng: 127.1285),
+  // TODO: GET /api/places?school_id=
+  static const places = <Place>[
+    Place(
+      placeId: 1,
+      schoolId: 1,
+      name: '가천관',
+      placeType: 'building',
+      latitude: 37.4491,
+      longitude: 127.1273,
+    ),
+    Place(
+      placeId: 2,
+      schoolId: 1,
+      name: '비전타워',
+      placeType: 'building',
+      latitude: 37.4499,
+      longitude: 127.1281,
+    ),
+    Place(
+      placeId: 3,
+      schoolId: 1,
+      name: '공과대학1관',
+      placeType: 'building',
+      latitude: 37.4483,
+      longitude: 127.1265,
+    ),
+    Place(
+      placeId: 4,
+      schoolId: 1,
+      name: '공과대학2관',
+      placeType: 'building',
+      latitude: 37.4480,
+      longitude: 127.1270,
+    ),
+    Place(
+      placeId: 5,
+      schoolId: 1,
+      name: 'AI도서관',
+      placeType: 'building',
+      latitude: 37.4496,
+      longitude: 127.1278,
+    ),
+    Place(
+      placeId: 6,
+      schoolId: 1,
+      name: '제1학생생활관',
+      placeType: 'dormitory',
+      latitude: 37.4473,
+      longitude: 127.1255,
+    ),
+    Place(
+      placeId: 7,
+      schoolId: 1,
+      name: '제3학생생활관',
+      placeType: 'dormitory',
+      latitude: 37.4469,
+      longitude: 127.1260,
+    ),
+    Place(
+      placeId: 8,
+      schoolId: 1,
+      name: '교육대학원',
+      placeType: 'building',
+      latitude: 37.4487,
+      longitude: 127.1290,
+    ),
+    Place(
+      placeId: 9,
+      schoolId: 1,
+      name: '학생회관',
+      placeType: 'building',
+      latitude: 37.4492,
+      longitude: 127.1262,
+    ),
+    Place(
+      placeId: 10,
+      schoolId: 1,
+      name: '의과대학',
+      placeType: 'building',
+      latitude: 37.4502,
+      longitude: 127.1295,
+    ),
+    Place(
+      placeId: 11,
+      schoolId: 1,
+      name: '약학대학',
+      placeType: 'building',
+      latitude: 37.4497,
+      longitude: 127.1268,
+    ),
+    Place(
+      placeId: 12,
+      schoolId: 1,
+      name: 'IT대학',
+      placeType: 'building',
+      latitude: 37.4485,
+      longitude: 127.1285,
+    ),
   ];
 
-  static List<String> get buildingNames =>
-      buildings.map((b) => b.name).toList();
+  static List<String> get buildingNames => places.map((p) => p.name).toList();
 
-  // ─────────────────────────────────────────────────────────
-  // 경로 탐색 (A* + 순열 최적화)
   // TODO: POST /api/campus/route
-  //   Body: { departure, waypoints:[], destination }
-  //   Response: RouteResult JSON
-  // ─────────────────────────────────────────────────────────
   static Future<RouteResult> findRoute(
     String departure,
     List<String> waypoints,
     String destination,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 800)); // 네트워크 시뮬레이션
+    await Future.delayed(const Duration(milliseconds: 800));
 
-    // MOCK: 실제 A* 알고리즘 결과 대체
     final allStops = [departure, ...waypoints, destination];
     final segments = <WaypointResult>[];
     double total = 0;
@@ -63,15 +137,10 @@ class CampusNavigationService {
   }
 
   static double _mockDistance(String a, String b) {
-    final ba = buildings.firstWhere(
-      (x) => x.name == a,
-      orElse: () => buildings[0],
-    );
-    final bb = buildings.firstWhere(
-      (x) => x.name == b,
-      orElse: () => buildings[1],
-    );
-    final dlat = ba.lat - bb.lat, dlng = ba.lng - bb.lng;
-    return sqrt(dlat * dlat + dlng * dlng) * 111; // 대략적 km
+    final pa = places.firstWhere((x) => x.name == a, orElse: () => places[0]);
+    final pb = places.firstWhere((x) => x.name == b, orElse: () => places[1]);
+    final dlat = pa.latitude - pb.latitude;
+    final dlng = pa.longitude - pb.longitude;
+    return sqrt(dlat * dlat + dlng * dlng) * 111;
   }
 }
