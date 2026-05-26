@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../model/user_profile.dart';
-import '../api/auth_api.dart';
-import 'login_page.dart';
 import 'campus_navigation_page.dart';
 import 'course_search_page.dart';
 import 'lost_found_page.dart';
@@ -130,19 +128,6 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
         centerTitle: true,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: '로그아웃',
-            onPressed: () async {
-              await AuthApi.logout();
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                );
-              }
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Colors.white),
             onPressed: _openSettings,
