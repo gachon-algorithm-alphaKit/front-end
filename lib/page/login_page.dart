@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../api/auth_api.dart';
+import '../model/user_profile.dart';
 import 'additional_info_page.dart';
+import 'dashboard_page.dart';
 
 // 지원 대학교 목록
 const List<String> kSupportedUniversities = [
@@ -39,6 +42,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
   String _selectedUniversity = '가천대학교';
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -47,15 +51,64 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const AdditionalInfoPage()),
-    );
+    setState(() => _isLoading = true);
+    
+    try {
+      final username = _loginIdCtrl.text.trim();
+      final password = _passwordCtrl.text;
+      
+      final response = await AuthApi.login(username, password, 1);
+      
+      if (response['status'] == 'success') {
+        if (response['data'] == null) {
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AdditionalInfoPage(
+                username: username,
+                password: password,
+                schoolId: 1,
+              ),
+            ),
+          );
+        } else {
+          final data = response['data'];
+          await AuthApi.saveTokens(data['access_token'], data['refresh_token']);
+          if (!mounted) return;
+          
+          final profile = UserProfile(
+            name: data['name'] ?? '홍길동',
+            studentId: data['login_id'] ?? '202220222',
+            department: data['major'] ?? '컴퓨터공학과',
+          );
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MainDashboardPage(initialProfile: profile),
+            ),
+          );
+        }
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? '로그인 실패')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('서버 통신 오류가 발생했습니다.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -149,18 +202,20 @@ class _LoginPageState extends State<LoginPage> {
                           : null,
                     ),
                     const SizedBox(height: 22),
-                    FilledButton.icon(
-                      onPressed: _login,
-                      icon: const Icon(Icons.login_rounded),
-                      label: const Text('로그인'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.indigo,
-                        minimumSize: const Size(double.infinity, 52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : FilledButton.icon(
+                            onPressed: _login,
+                            icon: const Icon(Icons.login_rounded),
+                            label: const Text('로그인'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              minimumSize: const Size(double.infinity, 52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
                   ],
                 ),
               ),

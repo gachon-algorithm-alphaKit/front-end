@@ -4,12 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../api/auth_api.dart';
 import '../component/picker_option.dart';
 import '../model/user_profile.dart';
 import 'dashboard_page.dart';
 
 class AdditionalInfoPage extends StatefulWidget {
-  const AdditionalInfoPage({super.key});
+  final String username;
+  final String password;
+  final int schoolId;
+
+  const AdditionalInfoPage({
+    super.key,
+    this.username = '',
+    this.password = '',
+    this.schoolId = 1,
+  });
 
   @override
   State<AdditionalInfoPage> createState() => _AdditionalInfoPageState();
@@ -29,6 +39,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
   final _gpaCtrl = TextEditingController();
   int? _incomeBracket;
   XFile? _profileImage;
+  bool _isLoading = false;
 
   final _picker = ImagePicker();
   late AnimationController _animCtrl;
@@ -122,7 +133,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
   );
 
   // ── 완료 ───────────────────────────────────────────────────
-  void _submit() {
+  void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     double? gpa;
@@ -133,25 +144,59 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
         return;
       }
     }
+    
+    setState(() => _isLoading = true);
 
-    final profile = UserProfile(
-      name: _nameCtrl.text.trim(),
-      studentId: _studentIdCtrl.text.trim(),
-      department: _departmentCtrl.text.trim(),
-      grade: _selectedGrade,
-      gpa: gpa,
-      incomeBracket: _incomeBracket,
-    );
+    try {
+      final gradeString = _selectedGrade.replaceAll(RegExp(r'[^0-9]'), '');
+      final gradeInt = int.tryParse(gradeString) ?? 1;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MainDashboardPage(
-          initialProfile: profile,
-          initialProfileImage: _profileImage,
-        ),
-      ),
-    );
+      final data = {
+        "login_id": widget.username,
+        "school_id": widget.schoolId,
+        "name": _nameCtrl.text.trim(),
+        "password": widget.password,
+        "profile_img": "", // 나중에 이미지 업로드 처리
+        "grade": gradeInt,
+        "major": _departmentCtrl.text.trim(),
+        "gpa": gpa ?? 0.0,
+        "income_bracket": _incomeBracket ?? 0,
+      };
+
+      final response = await AuthApi.submitAdditionalInfo(data);
+      if (response['status'] == 'success') {
+        final resData = response['data'];
+        await AuthApi.saveTokens(resData['access_token'], resData['refresh_token']);
+        
+        final profile = UserProfile(
+          name: _nameCtrl.text.trim(),
+          studentId: _studentIdCtrl.text.trim(),
+          department: _departmentCtrl.text.trim(),
+          grade: _selectedGrade,
+          gpa: gpa,
+          incomeBracket: _incomeBracket,
+        );
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MainDashboardPage(
+              initialProfile: profile,
+              initialProfileImage: _profileImage,
+            ),
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        _showError(response['message'] ?? '정보 등록 실패');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showError('서버 통신 중 오류가 발생했습니다.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showError(String msg) {
@@ -388,10 +433,12 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                         const SizedBox(height: 32),
 
                         // ── 완료 버튼 ────────────────────────
-                        FilledButton.icon(
-                          onPressed: _submit,
-                          icon: const Icon(Icons.check_rounded),
-                          label: const Text(
+                        _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : FilledButton.icon(
+                                onPressed: _submit,
+                                icon: const Icon(Icons.check_rounded),
+                                label: const Text(
                             '정보 입력 완료',
                             style: TextStyle(
                               fontSize: 16,
