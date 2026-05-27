@@ -6,6 +6,7 @@
 // ============================================================
 
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -14,153 +15,70 @@ import 'package:http/http.dart' as http;
 import '../model/route_model.dart';
 
 class CampusNavigationService {
-  // ----------------------------------------------------------
-  // 1. 가천대학교 건물 좌표 데이터 (Python: BUILDING_COORDS)
-  // ----------------------------------------------------------
-  static const Map<String, (double, double)> buildingCoords = {
-    '가천관':           (37.4503, 127.1298),
-    '비전타워':         (37.4495, 127.1275),
-    '반도체대학':       (37.4510, 127.1272),
-    '한의과대학':       (37.4500, 127.1285),
-    '바이오나노연구원': (37.4498, 127.1280),
-    '글로벌센터':       (37.4519, 127.1271),
-    '바이오나노대학':   (37.4512, 127.1296),
-    '공과대학1':        (37.4516, 127.1280),
-    '공과대학2':        (37.4492, 127.1285),
-    '예술·체육대학1':   (37.4522, 127.1287),
-    '예술·체육대학2':   (37.4516, 127.1297),
-    '대학원':           (37.4527, 127.1301),
-    '교육대학원':       (37.4519, 127.1318),
-    '중앙도서관':       (37.4524, 127.1328),
-    '학생회관':         (37.4529, 127.1344),
-    'AI관':             (37.4551, 127.1335),
-    '제1학생생활관':    (37.4563, 127.1355),
-    '제2학생생활관':    (37.4560, 127.1340),
-    '제3학생생활관':    (37.4558, 127.1332),
-    '운동장':           (37.4550, 127.1351),
-  };
+  static const String baseUrl = 'http://10.0.2.2:8000';
+  static bool _initialized = false;
 
   // ----------------------------------------------------------
-  // 2. 건물 별칭 (Python: BUILDING_ALIASES)
+  // 1. 서버에서 받아올 그래프 데이터
   // ----------------------------------------------------------
-  static const Map<String, String> buildingAliases = {
-    '기숙사':    '제2학생생활관',
-    '제1기숙사': '제1학생생활관',
-    '제2기숙사': '제2학생생활관',
-    '제3기숙사': '제3학생생활관',
-    '공대1':     '공과대학1',
-    '공대2':     '공과대학2',
-    '예체대1':   '예술·체육대학1',
-    '예체대2':   '예술·체육대학2',
-  };
+  static Map<String, (double, double)> buildingCoords = {};
+  static Map<String, (double, double)> pathNodes = {};
+  static Map<String, String> buildingAliases = {};
+  static List<(String, String)> walkableEdges = [];
 
-  // ----------------------------------------------------------
-  // 3. 캠퍼스 인도 경로 노드 (Python: PATH_NODES)
-  // ----------------------------------------------------------
-  static const Map<String, (double, double)> pathNodes = {
-    'P_01': (37.4505, 127.1271),
-    'P_02': (37.4505, 127.1275),
-    'P_03': (37.4504, 127.1279),
-    'P_04': (37.4490, 127.1279),
-    'P_05': (37.4490, 127.1291),
-    'P_06': (37.4500, 127.1294),
-    'P_07': (37.4499, 127.1296),
-    'P_08': (37.4509, 127.1298),
-    'P_09': (37.4517, 127.1275),
-    'P_10': (37.4519, 127.1286),
-    'P_11': (37.4512, 127.1288),
-    'P_12': (37.4514, 127.1298),
-    'P_13': (37.4513, 127.1301),
-    'P_14': (37.4508, 127.1302),
-    'P_15': (37.4509, 127.1303),
-    'P_16': (37.4512, 127.1309),
-    'P_17': (37.4519, 127.1312),
-    'P_18': (37.4525, 127.1305),
-    'P_19': (37.4527, 127.1327),
-    'P_20': (37.4534, 127.1340),
-    'P_21': (37.4552, 127.1332),
-    'P_22': (37.4538, 127.1347),
-    'P_23': (37.4550, 127.1347),
-    'P_24': (37.4558, 127.1346),
-  };
-
-  // 모든 노드 (건물 + 경로 노드) — Python: ALL_COORDS
+  // 모든 노드 (건물 + 경로 노드)
   static Map<String, (double, double)> get allCoords => {
         ...buildingCoords,
         ...pathNodes,
       };
 
-  // ----------------------------------------------------------
-  // 4. 보행 가능한 엣지 정의 (Python: WALKABLE_EDGES)
-  // ----------------------------------------------------------
-  static const List<(String, String)> walkableEdges = [
-    // 건물 <-> 인접 경로 노드
-    ('비전타워',       'P_01'),
-    ('비전타워',       'P_02'),
-    ('반도체대학',     'P_01'),
-    ('반도체대학',     'P_02'),
-    ('글로벌센터',     'P_09'),
-    ('바이오나노연구원', 'P_03'),
-    ('바이오나노연구원', 'P_04'),
-    ('바이오나노연구원', '공과대학2'),
-    ('한의과대학',     'P_03'),
-    ('한의과대학',     'P_06'),
-    ('한의과대학',     '바이오나노연구원'),
-    ('한의과대학',     '공과대학2'),
-    ('공과대학2',      'P_04'),
-    ('공과대학2',      'P_05'),
-    ('가천관',         'P_06'),
-    ('가천관',         'P_07'),
-    ('가천관',         'P_08'),
-    ('공과대학1',      'P_03'),
-    ('공과대학1',      'P_09'),
-    ('공과대학1',      'P_10'),
-    ('바이오나노대학', 'P_11'),
-    ('바이오나노대학', 'P_12'),
-    ('예술·체육대학1', 'P_10'),
-    ('예술·체육대학2', 'P_12'),
-    ('교육대학원',     'P_17'),
-    ('대학원',         'P_18'),
-    ('중앙도서관',     'P_19'),
-    ('학생회관',       'P_20'),
-    ('AI관',           'P_21'),
-    ('제3학생생활관',  'P_21'),
-    ('제2학생생활관',  'P_24'),
-    ('제1학생생활관',  'P_24'),
-    ('운동장',         'P_23'),
-    // 경로 노드 <-> 경로 노드
-    ('P_01', 'P_02'),
-    ('P_02', 'P_03'),
-    ('P_02', 'P_09'),
-    ('P_03', 'P_04'),
-    ('P_03', 'P_06'),
-    ('P_04', 'P_05'),
-    ('P_05', 'P_06'),
-    ('P_06', 'P_07'),
-    ('P_06', 'P_08'),
-    ('P_08', 'P_14'),
-    ('P_09', 'P_10'),
-    ('P_10', 'P_11'),
-    ('P_10', 'P_18'),
-    ('P_11', 'P_12'),
-    ('P_12', 'P_13'),
-    ('P_13', 'P_14'),
-    ('P_14', 'P_15'),
-    ('P_15', 'P_16'),
-    ('P_16', 'P_17'),
-    ('P_17', 'P_18'),
-    ('P_17', 'P_19'),
-    ('P_18', 'P_19'),
-    ('P_19', 'P_20'),
-    ('P_20', 'P_21'),
-    ('P_20', 'P_22'),
-    ('P_21', 'P_24'),
-    ('P_22', 'P_23'),
-    ('P_23', 'P_24'),
-  ];
-
   // 건물 이름 목록 (UI 자동완성용)
   static List<String> get buildingNames => buildingCoords.keys.toList();
+
+  /// 서버에서 맵 데이터를 가져와 초기화
+  static Future<void> initialize() async {
+    if (_initialized) return;
+
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/api/campus/graph/')).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          final data = decoded['data'];
+          
+          buildingCoords.clear();
+          pathNodes.clear();
+          final nodes = data['nodes'] as Map<String, dynamic>;
+          nodes.forEach((name, info) {
+            final lat = (info['lat'] as num).toDouble();
+            final lon = (info['lon'] as num).toDouble();
+            final type = info['type'] as String;
+            if (type == 'PATH') {
+              pathNodes[name] = (lat, lon);
+            } else {
+              buildingCoords[name] = (lat, lon);
+            }
+          });
+
+          walkableEdges.clear();
+          final edges = data['edges'] as List;
+          for (final e in edges) {
+            walkableEdges.add((e[0] as String, e[1] as String));
+          }
+
+          buildingAliases.clear();
+          final aliases = data['aliases'] as Map<String, dynamic>;
+          aliases.forEach((k, v) {
+            buildingAliases[k] = v as String;
+          });
+
+          _initialized = true;
+        }
+      }
+    } catch (e) {
+      print('Campus map init failed: $e');
+    }
+  }
 
   // ----------------------------------------------------------
   // 5. 별칭 → 실제 건물명 변환 (Python: resolve_name)
@@ -340,6 +258,11 @@ class CampusNavigationService {
     List<String> waypoints,
     String destination,
   ) async {
+    // 0) 데이터 초기화 확인
+    if (!_initialized) {
+      await initialize();
+    }
+
     // 1) 별칭 → 정규 이름 변환
     final start = resolveName(departure.trim());
     final end   = resolveName(destination.trim());
