@@ -1,39 +1,104 @@
 import 'package:flutter/material.dart';
 
-import '../api/course_service.dart';
-import '../model/course_model.dart';
+import '../../api/auth_api.dart';
+import '../../api/course_service.dart';
+import '../../api/wishlist_service.dart';
+import '../../model/course_model.dart';
+import '../../state/app_state.dart';
+import '../login/login_page.dart';
 
 class CourseWishlistPage extends StatefulWidget {
-  final Set<int> wishlistIds;
-  final ValueChanged<int> onToggle;
-  const CourseWishlistPage({
-    super.key,
-    required this.wishlistIds,
-    required this.onToggle,
-  });
+  const CourseWishlistPage({super.key});
   @override
   State<CourseWishlistPage> createState() => _CourseWishlistPageState();
 }
 
 class _CourseWishlistPageState extends State<CourseWishlistPage> {
-  // 모든 강의 목록에서 찜한 것만 필터
-  List<Course> get _wished => CourseService.allCourses
-      .where((c) => widget.wishlistIds.contains(c.courseId))
-      .toList();
+  List<Course> _wished = [];
+  bool _isLoading = true;
+  final Set<int> _removingIds = {}; // 삭제 요청 중인 강의 ID (중복 클릭 방지)
 
-  void _toggle(int id) {
-    widget.onToggle(id);
-    setState(() {});
+  @override
+  void initState() {
+    super.initState();
+    _loadWishlist();
+  }
+
+  Future<void> _loadWishlist() async {
+    setState(() => _isLoading = true);
+    try {
+      final courses = await WishlistService.fetchWishlist();
+      // 전역 상태 동기화
+      syncWishlistIds(courses.map((c) => c.courseId).toSet());
+      setState(() {
+        _wished = courses;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleRemove(int courseId) async {
+    if (_removingIds.contains(courseId)) return;
+
+    // 낙관적 업데이트: 리스트에서 즉시 제거
+    final removedCourse = _wished.firstWhere((c) => c.courseId == courseId);
+    final removedIndex = _wished.indexOf(removedCourse);
+
+    setState(() {
+      _removingIds.add(courseId);
+      _wished.removeAt(removedIndex);
+      wishlistCourseIds.remove(courseId);
+    });
+
+    final result = await WishlistService.removeFromWishlist(courseId);
+
+    setState(() {
+      _removingIds.remove(courseId);
+    });
+
+    if (!result.success) {
+      // 롤백
+      setState(() {
+        _wished.insert(removedIndex.clamp(0, _wished.length), removedCourse);
+        wishlistCourseIds.add(courseId);
+      });
+
+      if (!mounted) return;
+
+      if (result.unauthorized) {
+        await AuthApi.logout();
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage(sessionExpired: true)),
+          (route) => false,
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message), backgroundColor: Colors.red.shade400),
+      );
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.amber.shade800,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final wished = _wished;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text(
-          '찜한 강의 (${wished.length})',
+          '찜한 강의 (${_wished.length})',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -45,7 +110,9 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: wished.isEmpty
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _wished.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -70,10 +137,10 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: wished.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemCount: _wished.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
-                final c = wished[i];
+                final c = _wished[i];
                 return Card(
                   elevation: 0,
                   color: Colors.white,
@@ -118,14 +185,20 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
                         color: Colors.grey.shade600,
                       ),
                     ),
-                    trailing: GestureDetector(
-                      onTap: () => _toggle(c.courseId),
-                      child: const Icon(
-                        Icons.favorite_rounded,
-                        color: Colors.redAccent,
-                        size: 22,
-                      ),
-                    ),
+                    trailing: _removingIds.contains(c.courseId)
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : GestureDetector(
+                            onTap: () => _handleRemove(c.courseId),
+                            child: const Icon(
+                              Icons.favorite_rounded,
+                              color: Colors.redAccent,
+                              size: 22,
+                            ),
+                          ),
                     children: [
                       const Divider(height: 1),
                       const SizedBox(height: 12),
@@ -150,7 +223,3 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
-// 3. 스터디룸 예약 페이지
-// ══════════════════════════════════════════════════════════════

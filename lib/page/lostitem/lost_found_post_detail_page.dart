@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../model/lost_found_model.dart';
+import '../../model/lost_found_model.dart';
 import 'lost_found_write_page.dart';
 
 class LostFoundPostDetailPage extends StatefulWidget {
@@ -379,7 +379,3 @@ class _LostFoundPostDetailPageState extends State<LostFoundPostDetailPage> {
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
-// 5. 장학 제도 탐색 페이지
-// ══════════════════════════════════════════════════════════════

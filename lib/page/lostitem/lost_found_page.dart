@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../api/lost_found_service.dart';
-import '../model/lost_found_model.dart';
-import '../state/app_state.dart';
+import '../../api/lost_found_service.dart';
+import '../../model/lost_found_model.dart';
+import '../../state/app_state.dart';
 import 'lost_found_history_page.dart';
 import 'lost_found_write_page.dart';
 
@@ -340,7 +340,3 @@ class _LostFoundPageState extends State<LostFoundPage> {
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
-// 4-B. 분실물 작성 페이지
-// ══════════════════════════════════════════════════════════════

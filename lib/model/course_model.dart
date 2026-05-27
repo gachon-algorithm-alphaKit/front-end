@@ -40,6 +40,7 @@ class Course {
   final String startTime;
   final String endTime;
   final String majorTerm;
+  final String professorName;
 
   const Course({
     required this.courseId,
@@ -52,20 +53,22 @@ class Course {
     required this.startTime,
     required this.endTime,
     required this.majorTerm,
+    this.professorName = '',
   });
 
   factory Course.fromJson(Map<String, dynamic> json) {
     return Course(
-      courseId: json['course_id'],
-      schoolId: json['school_id'],
-      professorId: json['professor_id'],
-      courseCode: json['course_code'],
-      courseName: json['course_name'],
+      courseId: json['course_id'] ?? 0,
+      schoolId: json['school_id'] ?? 1,
+      professorId: json['professor_id'] ?? 0,
+      courseCode: json['course_code'] ?? '',
+      courseName: json['course_name'] ?? '',
       description: json['description'] ?? '',
-      dayOfWeek: json['day_of_week'],
-      startTime: json['start_time'],
-      endTime: json['end_time'],
-      majorTerm: json['major_term'],
+      dayOfWeek: json['day_of_week'] ?? '',
+      startTime: json['start_time'] ?? '',
+      endTime: json['end_time'] ?? '',
+      majorTerm: json['major_term'] ?? '',
+      professorName: json['professor_name'] ?? '',
     );
   }
 
@@ -83,12 +86,13 @@ class Course {
       'start_time': startTime,
       'end_time': endTime,
       'major_term': majorTerm,
+      'professor_name': professorName,
     };
   }
 
   @override
   String toString() {
-    return 'Course(courseId: $courseId, schoolId: $schoolId, professorId: $professorId, courseCode: $courseCode, courseName: $courseName, description: $description, dayOfWeek: $dayOfWeek, startTime: $startTime, endTime: $endTime, majorTerm: $majorTerm)';
+    return 'Course(courseId: $courseId, courseName: $courseName)';
   }
 }
 

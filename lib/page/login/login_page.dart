@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../api/auth_api.dart';
-import '../model/user_profile.dart';
+import '../../api/auth_api.dart';
+import '../../model/user_profile.dart';
 import 'additional_info_page.dart';
-import 'dashboard_page.dart';
+import '../dashboard_page.dart';
 
 // 지원 대학교 목록
 const List<String> kSupportedUniversities = [
@@ -221,8 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                               backgroundColor: Colors.indigo,
                               minimumSize: const Size(double.infinity, 52),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                           ),
                   ],

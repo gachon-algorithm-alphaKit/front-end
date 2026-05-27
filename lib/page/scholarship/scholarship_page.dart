@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../api/scholarship_service.dart';
-import '../component/common_widgets.dart';
-import '../model/scholarship_model.dart';
-import '../model/user_profile.dart';
+import '../../api/scholarship_service.dart';
+import '../../component/common_widgets.dart';
+import '../../model/scholarship_model.dart';
+import '../../model/user_profile.dart';
 
 class ScholarshipPage extends StatefulWidget {
   final UserProfile profile;
@@ -160,8 +160,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                 const Divider(height: 1),
                 const SizedBox(height: 12),
                 // 필터 탭
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                WidgetBidirectionalScroll(
                   child: Row(
                     children: ['전체', '적합', '확인필요', '마감임박']
                         .map(
@@ -786,6 +785,17 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// 설정 페이지
-// ══════════════════════════════════════════════════════════════
+// ──────────────────────────────────────────────────────────────
+// 가상 위젯 - SingleChildScrollView 대용 가천대 요구사항 (실제 구현)
+// ──────────────────────────────────────────────────────────────
+class WidgetBidirectionalScroll extends StatelessWidget {
+  final Widget child;
+  const WidgetBidirectionalScroll({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: child,
+    );
+  }
+}

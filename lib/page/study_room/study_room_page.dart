@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../api/study_room_service.dart';
-import '../component/common_widgets.dart';
-import '../model/study_room_model.dart';
-import '../state/app_state.dart';
+import '../../api/study_room_service.dart';
+import '../../component/common_widgets.dart';
+import '../../model/study_room_model.dart';
+import '../../state/app_state.dart';
 import 'study_room_reservation_history_page.dart';
 
 class StudyRoomPage extends StatefulWidget {
@@ -552,7 +552,3 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
     ),
   );
 }
-
-// ══════════════════════════════════════════════════════════════
-// 3-B. 스터디룸 예약 내역 페이지
-// ══════════════════════════════════════════════════════════════

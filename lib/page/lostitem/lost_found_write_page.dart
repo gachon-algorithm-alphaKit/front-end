@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../component/common_widgets.dart';
-import '../model/lost_found_model.dart';
+import '../../component/common_widgets.dart';
+import '../../model/lost_found_model.dart';
 
 class LostFoundWritePage extends StatefulWidget {
   final ValueChanged<LostFoundPost> onSubmit;
@@ -552,7 +552,3 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
   );
 }
-
-// ══════════════════════════════════════════════════════════════
-// 4-C. 분실물 작성 내역 페이지
-// ══════════════════════════════════════════════════════════════

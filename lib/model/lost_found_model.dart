@@ -37,7 +37,7 @@ class LostItemPost {
       isAnonymous: _boolFromJson(json['is_anonymous'], fallback: true),
       category: json['category'],
       description: json['description'],
-      imgFilePath: json['img_file_path'] ?? '',
+      imgFilePath: json['lost_item_img'] ?? '',
       createTime: json['create_time'],
       similarity: json['similarity'] ?? 100,
       status: json['status'] ?? '보관중',
@@ -89,7 +89,7 @@ class LostItemPost {
       'is_anonymous': isAnonymous,
       'category': category,
       'description': description,
-      'img_file_path': imgFilePath,
+      'lost_item_img': imgFilePath,
       'create_time': createTime,
     };
   }

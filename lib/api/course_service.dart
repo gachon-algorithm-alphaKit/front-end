@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../model/course_model.dart';
 
 class CourseService {
+  static const String baseUrl = 'http://10.0.2.2:8000';
+
   // TODO: GET /api/courses/autocomplete?q=&type=name|professor|content
   static Future<List<String>> autocomplete(
     String query,
@@ -25,33 +29,49 @@ class CourseService {
         .toList();
   }
 
-  // TODO: GET /api/courses/search?q=&type=name|professor|content&choseong=true
   static Future<List<Course>> search(
     String query,
     SearchType type,
     bool isChoseong,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 400));
     if (query.isEmpty) {
       return [];
     }
 
-    return _mockCourses
-        .where((c) {
-          switch (type) {
-            case SearchType.name:
-              return c.courseName.contains(query);
-            case SearchType.professor:
-              return professorNameFor(c).contains(query);
-            case SearchType.content:
-              return c.description.contains(query);
-          }
-        })
-        .take(10)
-        .toList();
+    String searchTypeStr = 'name';
+    if (type == SearchType.professor) {
+      searchTypeStr = 'professor';
+    } else if (type == SearchType.content) {
+      searchTypeStr = 'content';
+    }
+
+    String url = '$baseUrl/api/courses/?school_id=1&search_type=$searchTypeStr';
+    
+    if (type == SearchType.professor) {
+      url += '&professor_name=${Uri.encodeComponent(query)}';
+    } else {
+      url += '&keyword=${Uri.encodeComponent(query)}';
+    }
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          final List data = decoded['data'] ?? [];
+          return data.map((json) => Course.fromJson(json)).toList();
+        }
+      }
+    } catch (e) {
+      print('Error fetching courses: $e');
+    }
+    return [];
   }
 
   static String professorNameFor(Course course) {
+    if (course.professorName.isNotEmpty) {
+      return course.professorName;
+    }
     return _mockProfessors
         .firstWhere(
           (p) => p.professorId == course.professorId,

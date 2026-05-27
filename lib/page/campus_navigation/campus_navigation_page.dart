@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../api/campus_navigation_service.dart';
-import '../component/common_widgets.dart';
-import '../model/route_model.dart';
+import '../../api/campus_navigation_service.dart';
+import '../../component/common_widgets.dart';
+import '../../model/route_model.dart';
 
 // ──────────────────────────────────────────────────────────────
 // 시각화 모드
@@ -857,7 +857,3 @@ class _CampusMapPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CampusMapPainter old) => old.result != result;
 }
-
-// ══════════════════════════════════════════════════════════════
-// 2. 강의 계획서 검색 페이지
-// ══════════════════════════════════════════════════════════════

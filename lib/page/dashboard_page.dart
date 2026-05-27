@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../model/user_profile.dart';
-import 'campus_navigation_page.dart';
-import 'course_search_page.dart';
-import 'lost_found_page.dart';
+import 'campus_navigation/campus_navigation_page.dart';
+import 'course/course_search_page.dart';
+import 'lostitem/lost_found_page.dart';
 import 'profile_settings_page.dart';
-import 'scholarship_page.dart';
-import 'study_room_page.dart';
+import 'scholarship/scholarship_page.dart';
+import 'study_room/study_room_page.dart';
 
 class MainDashboardPage extends StatefulWidget {
   final UserProfile? initialProfile;

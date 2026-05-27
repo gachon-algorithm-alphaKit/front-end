@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'api/auth_api.dart';
 import 'model/user_profile.dart';
-import 'page/login_page.dart';
+import 'page/login/login_page.dart';
 import 'page/dashboard_page.dart';
 
 void main() {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../model/lost_found_model.dart';
+import '../../model/lost_found_model.dart';
 import 'lost_found_post_detail_page.dart';
 
 class LostFoundHistoryPage extends StatefulWidget {
@@ -106,7 +106,7 @@ class _LostFoundHistoryPageState extends State<LostFoundHistoryPage> {
                                   color: Colors.red.shade50,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.inventory_2_outlined,
                                   color: Colors.redAccent,
                                   size: 20,
@@ -200,7 +200,3 @@ class _LostFoundHistoryPageState extends State<LostFoundHistoryPage> {
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
-// 4-D. 분실물 신고 상세 페이지 (수정 / 삭제)
-// ══════════════════════════════════════════════════════════════

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../api/auth_api.dart';
-import '../component/picker_option.dart';
-import '../model/user_profile.dart';
-import 'dashboard_page.dart';
+import '../../api/auth_api.dart';
+import '../../component/picker_option.dart';
+import '../../model/user_profile.dart';
+import '../dashboard_page.dart';
 
 class AdditionalInfoPage extends StatefulWidget {
   final String username;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../model/study_room_model.dart';
+import '../../model/study_room_model.dart';
 
 class StudyRoomReservationHistoryPage extends StatefulWidget {
   final List<StudyRoomReservation> reservations;
@@ -365,7 +365,3 @@ class _StudyRoomReservationHistoryPageState
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
-// 4. 분실물 통합 센터 페이지
-// ══════════════════════════════════════════════════════════════

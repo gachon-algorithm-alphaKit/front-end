@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api/auth_api.dart';
 import '../component/picker_option.dart';
 import '../model/user_profile.dart';
-import 'login_page.dart';
+import 'login/login_page.dart';
 
 class ProfileSettingsPage extends StatefulWidget {
   final UserProfile profile;

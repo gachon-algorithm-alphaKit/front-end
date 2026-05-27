@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../api/course_service.dart';
-import '../model/course_model.dart';
-import '../state/app_state.dart';
+import '../../api/auth_api.dart';
+import '../../api/course_service.dart';
+import '../../api/wishlist_service.dart';
+import '../../model/course_model.dart';
+import '../../state/app_state.dart';
+import '../login/login_page.dart';
 import 'course_wishlist_page.dart';
 
 class CourseSearchPage extends StatefulWidget {
@@ -17,6 +21,76 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
   final _ctrl = TextEditingController();
   List<Course> _results = [];
   bool _isLoading = false, _searched = false;
+  Timer? _debounce;
+  final Set<int> _togglingIds = {}; // 현재 토글 요청 중인 강의 ID (중복 클릭 방지)
+
+  /// 낙관적 업데이트 기반 찜 토글
+  Future<void> _handleToggle(int courseId) async {
+    if (_togglingIds.contains(courseId)) return; // 이미 처리 중
+
+    final wasWished = wishlistCourseIds.contains(courseId);
+
+    // 1) 낙관적 업데이트: UI 즉시 변경
+    setState(() {
+      _togglingIds.add(courseId);
+      if (wasWished) {
+        wishlistCourseIds.remove(courseId);
+      } else {
+        wishlistCourseIds.add(courseId);
+      }
+    });
+
+    // 2) 서버 요청
+    final result = await WishlistService.toggleWishlist(courseId);
+
+    // 3) 결과 처리
+    setState(() {
+      _togglingIds.remove(courseId);
+    });
+
+    if (!result.success) {
+      // 롤백
+      setState(() {
+        if (wasWished) {
+          wishlistCourseIds.add(courseId);
+        } else {
+          wishlistCourseIds.remove(courseId);
+        }
+      });
+
+      if (!mounted) return;
+
+      if (result.unauthorized) {
+        await AuthApi.logout();
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage(sessionExpired: true)),
+          (route) => false,
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message), backgroundColor: Colors.red.shade400),
+      );
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.amber.shade800,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _search() async {
     if (_ctrl.text.trim().isEmpty) return;
@@ -25,7 +99,6 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
       _searched = true;
     });
     try {
-      // TODO: CourseService.search → 백엔드 Trie + Rabin-Karp + 초성 검색
       final r = await CourseService.search(
         _ctrl.text.trim(),
         _type,
@@ -55,54 +128,27 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.favorite_rounded, color: Colors.white),
-                tooltip: '찜 목록',
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CourseWishlistPage(
-                        wishlistIds: wishlistCourseIds,
-                        onToggle: (id) => setState(() {
-                          if (wishlistCourseIds.contains(id)) {
-                            wishlistCourseIds.remove(id);
-                          } else {
-                            wishlistCourseIds.add(id);
-                          }
-                        }),
-                      ),
-                    ),
-                  );
-                  setState(() {});
-                },
-              ),
-              if (wishlistCourseIds.isNotEmpty)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${wishlistCourseIds.length}',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amber.shade800,
-                      ),
-                    ),
-                  ),
+          TextButton.icon(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CourseWishlistPage(),
                 ),
-            ],
+              );
+              setState(() {});
+            },
+            icon: Icon(
+              wishlistCourseIds.isNotEmpty
+                  ? Icons.bookmark_rounded
+                  : Icons.bookmark_border_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            label: Text(
+              '찜 목록${wishlistCourseIds.isNotEmpty ? ' (${wishlistCourseIds.length})' : ''}',
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+            ),
           ),
         ],
       ),
@@ -200,7 +246,13 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
                               : null,
                         ),
                         onSubmitted: (_) => _search(),
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (_) {
+                          if (_debounce?.isActive ?? false) _debounce!.cancel();
+                          _debounce = Timer(const Duration(milliseconds: 300), () {
+                            _search();
+                          });
+                          setState(() {});
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -312,24 +364,24 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
           '${CourseService.professorNameFor(c)} | ${c.majorTerm} | ${c.classTimeLabel}',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
-        trailing: GestureDetector(
-          onTap: () => setState(() {
-            if (isWished) {
-              wishlistCourseIds.remove(c.courseId);
-            } else {
-              wishlistCourseIds.add(c.courseId);
-            }
-          }),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Icon(
-              isWished ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              key: ValueKey(isWished),
-              color: isWished ? Colors.redAccent : Colors.grey.shade400,
-              size: 22,
-            ),
-          ),
-        ),
+        trailing: _togglingIds.contains(c.courseId)
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : GestureDetector(
+                onTap: () => _handleToggle(c.courseId),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    isWished ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    key: ValueKey(isWished),
+                    color: isWished ? Colors.redAccent : Colors.grey.shade400,
+                    size: 22,
+                  ),
+                ),
+              ),
         children: [
           const Divider(height: 1),
           const SizedBox(height: 12),
@@ -351,7 +403,3 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
-// 2-B. 강의 계획서 찜 목록 페이지
-// ══════════════════════════════════════════════════════════════
