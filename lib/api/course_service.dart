@@ -32,8 +32,10 @@ class CourseService {
   static Future<List<Course>> search(
     String query,
     SearchType type,
-    bool isChoseong,
-  ) async {
+    bool isChoseong, {
+    int page = 1,
+    int limit = 20,
+  }) async {
     if (query.isEmpty) {
       return [];
     }
@@ -45,7 +47,7 @@ class CourseService {
       searchTypeStr = 'content';
     }
 
-    String url = '$baseUrl/api/courses/?school_id=1&search_type=$searchTypeStr';
+    String url = '$baseUrl/api/courses/?school_id=1&search_type=$searchTypeStr&page=$page&limit=$limit';
     
     if (type == SearchType.professor) {
       url += '&professor_name=${Uri.encodeComponent(query)}';

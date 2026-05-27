@@ -1,27 +1,45 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../model/scholarship_model.dart';
 
 class ScholarshipService {
-  // TODO: GET /api/scholarships?gpa=&grade=&income=
   static Future<List<Scholarship>> fetch(
     double gpa,
     int grade,
     int incomeLevel,
-  ) async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    bool awardedLastSemester, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    
+    // API Call
+    try {
+      final url = 'http://10.0.2.2:8000/api/scholarships/?page=$page&limit=$limit&gpa=$gpa&income_bracket=$incomeLevel&awarded_last_semester=${awardedLastSemester ? "true" : "false"}';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
 
-    return _mockScholarships.map((s) {
-      int score = 40;
-      if (gpa >= s.requiredGpa) {
-        score += 30;
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          final List data = decoded['data'] ?? [];
+          return data.map((json) => Scholarship.fromJson(json)).toList();
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('UNAUTHORIZED');
       }
-      if (incomeLevel <= s.requiredIncomeBracket) {
-        score += 20;
+    } catch (e) {
+      if (e.toString().contains('UNAUTHORIZED')) {
+        rethrow;
       }
-      if (gpa >= 3.5) {
-        score += 10;
-      }
-      return s.copyWith(score: score.clamp(0, 100));
-    }).toList()..sort((a, b) => b.score.compareTo(a.score));
+      print('Scholarship fetch error: $e');
+    }
+    return [];
   }
 
   // TODO: POST /api/scholarships/apply

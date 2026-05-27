@@ -24,10 +24,24 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
   Timer? _debounce;
   final Set<int> _togglingIds = {}; // 현재 토글 요청 중인 강의 ID (중복 클릭 방지)
 
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _initWishlist();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasMore) {
+      _loadMore();
+    }
   }
 
   Future<void> _initWishlist() async {
@@ -99,26 +113,59 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollController.dispose();
     _ctrl.dispose();
     super.dispose();
   }
 
-  Future<void> _search() async {
+  Future<void> _search({bool isLoadMore = false}) async {
     if (_ctrl.text.trim().isEmpty) return;
-    setState(() {
-      _isLoading = true;
-      _searched = true;
-    });
+    
+    if (isLoadMore) {
+      setState(() => _isLoadingMore = true);
+    } else {
+      setState(() {
+        _isLoading = true;
+        _searched = true;
+        _currentPage = 1;
+        _hasMore = true;
+        _results = [];
+      });
+    }
+
     try {
+      final pageToLoad = isLoadMore ? _currentPage + 1 : 1;
       final r = await CourseService.search(
         _ctrl.text.trim(),
         _type,
         _isChoseong,
+        page: pageToLoad,
+        limit: 20,
       );
-      setState(() => _results = r);
+      
+      setState(() {
+        if (isLoadMore) {
+          _currentPage = pageToLoad;
+          _results.addAll(r);
+          _hasMore = r.length == 20;
+        } else {
+          _results = r;
+          _hasMore = r.length == 20;
+        }
+      });
     } finally {
-      setState(() => _isLoading = false);
+      setState(() {
+        if (isLoadMore) {
+          _isLoadingMore = false;
+        } else {
+          _isLoading = false;
+        }
+      });
     }
+  }
+
+  void _loadMore() {
+    _search(isLoadMore: true);
   }
 
   @override
@@ -328,10 +375,19 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
                     ),
                   )
                 : ListView.separated(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: _results.length,
+                    itemCount: _results.length + (_isLoadingMore ? 1 : 0),
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => _courseCard(_results[i]),
+                    itemBuilder: (_, i) {
+                      if (i == _results.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return _courseCard(_results[i]);
+                    },
                   ),
           ),
         ],

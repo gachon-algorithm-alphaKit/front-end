@@ -78,8 +78,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     final n = TextEditingController(text: _profile.name),
         d = TextEditingController(text: _profile.department),
         id = TextEditingController(text: _profile.studentId),
-        g = TextEditingController(text: _profile.grade),
         gpa = TextEditingController(text: _profile.gpa != null ? _profile.gpa!.toString() : '');
+    int gradeInt = int.tryParse(_profile.grade.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
     int? incomeBracket = _profile.incomeBracket;
     showDialog(
       context: context,
@@ -101,7 +101,21 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 const SizedBox(height: 12),
                 _editF('학번', id, Icons.badge_outlined, enabled: false),
                 const SizedBox(height: 12),
-                _editF('학년', g, Icons.bar_chart_outlined),
+                DropdownButtonFormField<int>(
+                  value: gradeInt,
+                  decoration: InputDecoration(
+                    labelText: '학년',
+                    prefixIcon: const Icon(Icons.bar_chart_outlined, size: 20, color: Colors.indigo),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.indigo, width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  items: List.generate(6, (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1}학년'))),
+                  onChanged: (v) => setDialogState(() => gradeInt = v!),
+                ),
                 const SizedBox(height: 18),
                 // 선택 항목
                 _sectionChip('선택', Colors.grey),
@@ -161,7 +175,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             FilledButton(
               onPressed: () async {
                 final parsedGpa = double.tryParse(gpa.text.trim());
-                final gradeInt = int.tryParse(g.text.trim()) ?? 0;
 
                 final reqData = {"name": n.text.trim(), "year": gradeInt, "gpa": parsedGpa ?? 0.0, "income_bracket": incomeBracket ?? 0, "studentId": id.text.trim()};
 
@@ -173,7 +186,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                       name: n.text.trim(),
                       department: d.text.trim(),
                       studentId: id.text.trim(),
-                      grade: g.text.trim(),
+                      grade: '${gradeInt}학년',
                       gpa: gpa.text.trim().isEmpty ? null : parsedGpa,
                       incomeBracket: incomeBracket,
                     );

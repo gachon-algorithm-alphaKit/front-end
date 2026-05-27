@@ -13,6 +13,11 @@ class Scholarship {
   final String? applyUrl;
   final String? targetGrade;
   final String? targetDepartment;
+  
+  // Recommendation info
+  final int matchScore;
+  final int dDay;
+  final bool isFullyMatched;
 
   const Scholarship({
     required this.scholarshipId,
@@ -29,24 +34,32 @@ class Scholarship {
     this.applyUrl,
     this.targetGrade,
     this.targetDepartment,
+    this.matchScore = 0,
+    this.dDay = -1,
+    this.isFullyMatched = false,
   });
 
   factory Scholarship.fromJson(Map<String, dynamic> json) {
+    final rec = json['recommendation_info'] as Map<String, dynamic>?;
+
     return Scholarship(
       scholarshipId: json['scholarship_id'],
       schoolId: json['school_id'],
       name: json['name'],
-      amount: json['amount'],
+      amount: json['minimum_amount'] ?? json['amount'] ?? 0,
       requiredGpa: (json['required_gpa'] as num).toDouble(),
       requiredIncomeBracket: json['required_income_bracket'],
       duplicateAllowed: _boolFromJson(json['duplicate_allowed']),
       score: json['score'] ?? 0,
       organization: json['organization'],
-      deadline: json['deadline'],
+      deadline: json['dead_line'] ?? json['deadline'],
       detail: json['detail'],
       applyUrl: json['apply_url'],
       targetGrade: json['target_grade'],
       targetDepartment: json['target_department'],
+      matchScore: rec?['match_score'] ?? 0,
+      dDay: rec?['d_day'] ?? -1,
+      isFullyMatched: _boolFromJson(rec?['is_fully_matched']),
     );
   }
 
@@ -76,6 +89,9 @@ class Scholarship {
       applyUrl: applyUrl,
       targetGrade: targetGrade,
       targetDepartment: targetDepartment,
+      matchScore: matchScore,
+      dDay: dDay,
+      isFullyMatched: isFullyMatched,
     );
   }
 
