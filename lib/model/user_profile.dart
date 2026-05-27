@@ -59,6 +59,7 @@ class UserProfile {
   String name, department, studentId, grade;
   double? gpa;           // 선택: 학점 (0.0 ~ 4.5)
   int? incomeBracket;    // 선택: 소득분위 (1 ~ 10)
+  String? profileImgUrl; // 선택: 프로필 이미지 URL
 
   UserProfile({
     this.name = '홍길동',
@@ -67,6 +68,7 @@ class UserProfile {
     this.grade = '3학년',
     this.gpa,
     this.incomeBracket,
+    this.profileImgUrl,
   });
 
   factory UserProfile.fromStudent(Student student) {
@@ -76,6 +78,21 @@ class UserProfile {
       studentId: student.loginId,
       gpa: student.gpa != 0.0 ? student.gpa : null,
       incomeBracket: student.incomeBracket != 0 ? student.incomeBracket : null,
+      profileImgUrl: student.profileImg.isNotEmpty ? student.profileImg : null,
+    );
+  }
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      name: json['name'] ?? '홍길동',
+      department: json['major'] ?? '컴퓨터공학과',
+      studentId: json['studentId']?.toString() ?? '202220222',
+      grade: json['year'] != null ? '${json['year']}학년' : '3학년',
+      gpa: json['gpa'] != null ? (json['gpa'] as num).toDouble() : null,
+      incomeBracket: json['income_bracket'],
+      profileImgUrl: json['profile_img'] != null && json['profile_img'].toString().isNotEmpty
+          ? json['profile_img']
+          : null,
     );
   }
 
@@ -86,6 +103,7 @@ class UserProfile {
     String? grade,
     Object? gpa = _sentinel,
     Object? incomeBracket = _sentinel,
+    Object? profileImgUrl = _sentinel,
   }) => UserProfile(
     name: name ?? this.name,
     department: department ?? this.department,
@@ -95,6 +113,9 @@ class UserProfile {
     incomeBracket: identical(incomeBracket, _sentinel)
         ? this.incomeBracket
         : incomeBracket as int?,
+    profileImgUrl: identical(profileImgUrl, _sentinel)
+        ? this.profileImgUrl
+        : profileImgUrl as String?,
   );
 }
 

@@ -30,13 +30,26 @@ const List<String> kSupportedUniversities = [
 ];
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final bool sessionExpired;
+  const LoginPage({super.key, this.sessionExpired = false});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.sessionExpired) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('자동 인증이 초기화 되었습니다. 다시 로그인 해주세요.')),
+        );
+      });
+    }
+  }
+
   final _formKey = GlobalKey<FormState>();
   final _loginIdCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -82,11 +95,7 @@ class _LoginPageState extends State<LoginPage> {
           await AuthApi.saveTokens(data['access_token'], data['refresh_token']);
           if (!mounted) return;
           
-          final profile = UserProfile(
-            name: data['name'] ?? '홍길동',
-            studentId: data['login_id'] ?? '202220222',
-            department: data['major'] ?? '컴퓨터공학과',
-          );
+          final profile = UserProfile.fromJson(data as Map<String, dynamic>);
 
           Navigator.pushReplacement(
             context,

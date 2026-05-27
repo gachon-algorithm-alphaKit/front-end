@@ -14,19 +14,13 @@ class AdditionalInfoPage extends StatefulWidget {
   final String password;
   final int schoolId;
 
-  const AdditionalInfoPage({
-    super.key,
-    this.username = '',
-    this.password = '',
-    this.schoolId = 1,
-  });
+  const AdditionalInfoPage({super.key, this.username = '', this.password = '', this.schoolId = 1});
 
   @override
   State<AdditionalInfoPage> createState() => _AdditionalInfoPageState();
 }
 
-class _AdditionalInfoPageState extends State<AdditionalInfoPage>
-    with SingleTickerProviderStateMixin {
+class _AdditionalInfoPageState extends State<AdditionalInfoPage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
   // 필수 필드
@@ -51,15 +45,9 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut));
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut));
     _animCtrl.forward();
   }
 
@@ -83,9 +71,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
   void _showImagePicker() => showModalBottomSheet(
     context: context,
     backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (_) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -94,28 +80,12 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
             margin: const EdgeInsets.symmetric(vertical: 12),
             width: 36,
             height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(4),
-            ),
+            decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4)),
           ),
-          const Text(
-            '프로필 사진 선택',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          const Text('프로필 사진 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          PickerOption(
-            icon: Icons.photo_library_rounded,
-            label: '갤러리에서 선택',
-            color: Colors.indigo,
-            onTap: () => _pickImage(ImageSource.gallery),
-          ),
-          PickerOption(
-            icon: Icons.camera_alt_rounded,
-            label: '카메라로 촬영',
-            color: Colors.blueAccent,
-            onTap: () => _pickImage(ImageSource.camera),
-          ),
+          PickerOption(icon: Icons.photo_library_rounded, label: '갤러리에서 선택', color: Colors.indigo, onTap: () => _pickImage(ImageSource.gallery)),
+          PickerOption(icon: Icons.camera_alt_rounded, label: '카메라로 촬영', color: Colors.blueAccent, onTap: () => _pickImage(ImageSource.camera)),
           if (_profileImage != null)
             PickerOption(
               icon: Icons.delete_outline_rounded,
@@ -144,7 +114,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
         return;
       }
     }
-    
+
     setState(() => _isLoading = true);
 
     try {
@@ -154,20 +124,23 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
       final data = {
         "login_id": widget.username,
         "school_id": widget.schoolId,
+        "student_id": _studentIdCtrl.text.trim(),
         "name": _nameCtrl.text.trim(),
         "password": widget.password,
-        "profile_img": "", // 나중에 이미지 업로드 처리
         "grade": gradeInt,
         "major": _departmentCtrl.text.trim(),
         "gpa": gpa ?? 0.0,
         "income_bracket": _incomeBracket ?? 0,
       };
 
-      final response = await AuthApi.submitAdditionalInfo(data);
+      final response = await AuthApi.submitAdditionalInfo(
+        data,
+        imagePath: _profileImage?.path,
+      );
       if (response['status'] == 'success') {
         final resData = response['data'];
         await AuthApi.saveTokens(resData['access_token'], resData['refresh_token']);
-        
+
         final profile = UserProfile(
           name: _nameCtrl.text.trim(),
           studentId: _studentIdCtrl.text.trim(),
@@ -181,10 +154,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => MainDashboardPage(
-              initialProfile: profile,
-              initialProfileImage: _profileImage,
-            ),
+            builder: (_) => MainDashboardPage(initialProfile: profile, initialProfileImage: _profileImage),
           ),
         );
       } else {
@@ -226,55 +196,25 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
               SliverToBoxAdapter(
                 child: Container(
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF3949AB), Color(0xFF1565C0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(28),
-                      bottomRight: Radius.circular(28),
-                    ),
+                    gradient: LinearGradient(colors: [Color(0xFF3949AB), Color(0xFF1565C0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
                   ),
-                  padding: EdgeInsets.fromLTRB(
-                    24,
-                    MediaQuery.of(context).padding.top + 28,
-                    24,
-                    36,
-                  ),
+                  padding: EdgeInsets.fromLTRB(24, MediaQuery.of(context).padding.top + 28, 24, 36),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.person_add_rounded,
-                          color: Colors.white,
-                          size: 28,
-                        ),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
+                        child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 28),
                       ),
                       const SizedBox(height: 16),
                       const Text(
                         '추가 정보 입력',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: -0.5),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        '서비스 이용을 위해 학생 정보를 입력해주세요.',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.78),
-                          fontSize: 14,
-                        ),
-                      ),
+                      Text('서비스 이용을 위해 학생 정보를 입력해주세요.', style: TextStyle(color: Colors.white.withValues(alpha: 0.78), fontSize: 14)),
                     ],
                   ),
                 ),
@@ -299,34 +239,11 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: Colors.indigo.shade100,
-                                  border: Border.all(
-                                    color: Colors.indigo.shade200,
-                                    width: 2,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.indigo
-                                          .withValues(alpha: 0.15),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                  image: _profileImage != null
-                                      ? DecorationImage(
-                                          image: FileImage(
-                                            File(_profileImage!.path),
-                                          ),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
+                                  border: Border.all(color: Colors.indigo.shade200, width: 2),
+                                  boxShadow: [BoxShadow(color: Colors.indigo.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 4))],
+                                  image: _profileImage != null ? DecorationImage(image: FileImage(File(_profileImage!.path)), fit: BoxFit.cover) : null,
                                 ),
-                                child: _profileImage == null
-                                    ? Icon(
-                                        Icons.person_rounded,
-                                        size: 52,
-                                        color: Colors.indigo.shade300,
-                                      )
-                                    : null,
+                                child: _profileImage == null ? Icon(Icons.person_rounded, size: 52, color: Colors.indigo.shade300) : null,
                               ),
                               Positioned(
                                 bottom: 0,
@@ -337,16 +254,9 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                                   decoration: BoxDecoration(
                                     color: Colors.indigo,
                                     shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 2,
-                                    ),
+                                    border: Border.all(color: Colors.white, width: 2),
                                   ),
-                                  child: const Icon(
-                                    Icons.camera_alt_rounded,
-                                    size: 15,
-                                    color: Colors.white,
-                                  ),
+                                  child: const Icon(Icons.camera_alt_rounded, size: 15, color: Colors.white),
                                 ),
                               ),
                             ],
@@ -354,13 +264,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        '탭하여 사진 선택 (선택)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
+                      Text('탭하여 사진 선택 (선택)', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     ],
                   ),
                 ),
@@ -382,9 +286,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             controller: _nameCtrl,
                             label: '이름',
                             icon: Icons.person_outline_rounded,
-                            validator: (v) => v == null || v.trim().isEmpty
-                                ? '이름을 입력해주세요.'
-                                : null,
+                            validator: (v) => v == null || v.trim().isEmpty ? '이름을 입력해주세요.' : null,
                           ),
                           const SizedBox(height: 14),
                           _inputField(
@@ -392,21 +294,15 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             label: '학번',
                             icon: Icons.badge_outlined,
                             keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            validator: (v) => v == null || v.trim().isEmpty
-                                ? '학번을 입력해주세요.'
-                                : null,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            validator: (v) => v == null || v.trim().isEmpty ? '학번을 입력해주세요.' : null,
                           ),
                           const SizedBox(height: 14),
                           _inputField(
                             controller: _departmentCtrl,
                             label: '학과',
                             icon: Icons.school_outlined,
-                            validator: (v) => v == null || v.trim().isEmpty
-                                ? '학과를 입력해주세요.'
-                                : null,
+                            validator: (v) => v == null || v.trim().isEmpty ? '학과를 입력해주세요.' : null,
                           ),
                           const SizedBox(height: 14),
                           _gradeDropdown(),
@@ -421,9 +317,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             controller: _gpaCtrl,
                             label: '학점 (GPA)',
                             icon: Icons.grade_outlined,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             isRequired: false,
                           ),
                           const SizedBox(height: 14),
@@ -438,22 +332,14 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                             : FilledButton.icon(
                                 onPressed: _submit,
                                 icon: const Icon(Icons.check_rounded),
-                                label: const Text(
-                            '정보 입력 완료',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF3949AB),
-                            minimumSize: const Size(double.infinity, 54),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                          ),
-                        ),
+                                label: const Text('정보 입력 완료', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF3949AB),
+                                  minimumSize: const Size(double.infinity, 54),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  elevation: 0,
+                                ),
+                              ),
                         SizedBox(height: bottom + 28),
                       ],
                     ),
@@ -473,43 +359,25 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
     children: [
       Text(
         label,
-        style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
       ),
       const SizedBox(width: 6),
       if (isRequired)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.indigo.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(6),
-          ),
+          decoration: BoxDecoration(color: Colors.indigo.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
           child: const Text(
             '필수',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.indigo,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.indigo, fontWeight: FontWeight.w600),
           ),
         )
       else
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(6),
-          ),
+          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
           child: Text(
             '선택',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
           ),
         ),
     ],
@@ -520,18 +388,9 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 12,
-          offset: const Offset(0, 2),
-        ),
-      ],
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 2))],
     ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
-    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
   );
 
   Widget _inputField({
@@ -563,10 +422,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
       child: DropdownButton<String>(
         value: _selectedGrade,
         isExpanded: true,
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: Colors.indigo.shade400,
-        ),
+        icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.indigo.shade400),
         style: const TextStyle(fontSize: 14, color: Colors.black87),
         items: _grades
             .map(
@@ -574,11 +430,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
                 value: g,
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.bar_chart_outlined,
-                      size: 18,
-                      color: Colors.indigo.shade400,
-                    ),
+                    Icon(Icons.bar_chart_outlined, size: 18, color: Colors.indigo.shade400),
                     const SizedBox(width: 10),
                     Text(g),
                   ],
@@ -596,28 +448,17 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
     children: [
       Row(
         children: [
-          Icon(Icons.account_balance_wallet_outlined,
-              size: 18, color: Colors.indigo.shade400),
+          Icon(Icons.account_balance_wallet_outlined, size: 18, color: Colors.indigo.shade400),
           const SizedBox(width: 10),
-          Text(
-            '소득분위',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-          ),
+          Text('소득분위', style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
           const Spacer(),
           if (_incomeBracket != null)
             Text(
               '$_incomeBracket분위',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF3949AB),
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF3949AB)),
             )
           else
-            Text(
-              '선택 안 함',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-            ),
+            Text('선택 안 함', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
         ],
       ),
       const SizedBox(height: 10),
@@ -628,32 +469,20 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
           final bracket = i + 1;
           final isSelected = _incomeBracket == bracket;
           return GestureDetector(
-            onTap: () => setState(
-              () => _incomeBracket = isSelected ? null : bracket,
-            ),
+            onTap: () => setState(() => _incomeBracket = isSelected ? null : bracket),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 42,
               height: 38,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF3949AB)
-                    : Colors.grey.shade100,
+                color: isSelected ? const Color(0xFF3949AB) : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF3949AB)
-                      : Colors.grey.shade200,
-                ),
+                border: Border.all(color: isSelected ? const Color(0xFF3949AB) : Colors.grey.shade200),
               ),
               child: Center(
                 child: Text(
                   '$bracket',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.grey.shade600),
                 ),
               ),
             ),
@@ -663,11 +492,7 @@ class _AdditionalInfoPageState extends State<AdditionalInfoPage>
     ],
   );
 
-  InputDecoration _inputDeco({
-    required String label,
-    required IconData icon,
-    String? hint,
-  }) => InputDecoration(
+  InputDecoration _inputDeco({required String label, required IconData icon, String? hint}) => InputDecoration(
     labelText: label,
     hintText: hint,
     prefixIcon: Icon(icon, color: Colors.indigo.shade400, size: 20),
