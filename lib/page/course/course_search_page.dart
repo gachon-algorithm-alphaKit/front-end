@@ -24,6 +24,17 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
   Timer? _debounce;
   final Set<int> _togglingIds = {}; // 현재 토글 요청 중인 강의 ID (중복 클릭 방지)
 
+  @override
+  void initState() {
+    super.initState();
+    _initWishlist();
+  }
+
+  Future<void> _initWishlist() async {
+    await WishlistService.fetchWishlistIds();
+    if (mounted) setState(() {});
+  }
+
   /// 낙관적 업데이트 기반 찜 토글
   Future<void> _handleToggle(int courseId) async {
     if (_togglingIds.contains(courseId)) return; // 이미 처리 중
@@ -182,6 +193,7 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
                   selected: {_type},
                   onSelectionChanged: (s) => setState(() {
                     _type = s.first;
+                    _ctrl.clear();
                     _results = [];
                     _searched = false;
                   }),

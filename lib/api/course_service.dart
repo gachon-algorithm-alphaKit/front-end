@@ -23,7 +23,7 @@ class CourseService {
             SearchType.name => c.courseName,
           },
         )
-        .where((s) => s.contains(query))
+        .where((s) => s.toLowerCase().contains(query.toLowerCase()))
         .toSet()
         .take(5)
         .toList();

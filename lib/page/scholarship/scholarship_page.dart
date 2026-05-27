@@ -27,6 +27,8 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
   late int _incomeLevel;
   bool _awardedLastSemester = false; // 직전 학기 수여 여부
   int _minAmount = 0; // 최소 장학금 금액 필터 (0 = 제한없음)
+  int _personalTuition = 0; // 개인 등록금
+  int _minPercentage = 0; // 장학금 비율 (0, 10, 30, 50, 100)
   List<Scholarship> _scholarships = [];
   bool _isLoading = false;
   String _filter = '전체';
@@ -51,10 +53,15 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
   }
 
   List<Scholarship> get _filtered {
-    // 최소 금액 필터 먼저 적용
-    final byAmount = _minAmount == 0
-        ? _scholarships
-        : _scholarships.where((s) => s.amount >= _minAmount).toList();
+    // 최소 금액 필터 & 비율 필터 동시 적용
+    final byAmount = _scholarships.where((s) {
+      if (_minAmount > 0 && s.amount < _minAmount) return false;
+      if (_personalTuition > 0 && _minPercentage > 0) {
+        final requiredAmount = _personalTuition * (_minPercentage / 100.0);
+        if (s.amount < requiredAmount) return false;
+      }
+      return true;
+    }).toList();
 
     switch (_filter) {
       case '적합':
@@ -148,6 +155,13 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                         '최소금액',
                         '${_minAmount ~/ 10000}만↑',
                         Colors.deepPurple,
+                      ),
+                    if (_minAmount > 0 || (_personalTuition > 0 && _minPercentage > 0)) const SizedBox(width: 8),
+                    if (_personalTuition > 0 && _minPercentage > 0)
+                      _infoChip(
+                        '커버율',
+                        '$_minPercentage%↑',
+                        Colors.blue,
                       ),
                     const Spacer(),
                     TextButton(
@@ -468,7 +482,10 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
     int grade = _grade, income = _incomeLevel;
     bool awarded = _awardedLastSemester;
     int minAmount = _minAmount;
+    int personalTuition = _personalTuition;
+    int minPercentage = _minPercentage;
     final gpaCtrl = TextEditingController(text: gpa.toStringAsFixed(1));
+    final tuitionCtrl = TextEditingController(text: personalTuition == 0 ? '' : personalTuition.toString());
 
     showDialog(
       context: context,
@@ -753,6 +770,89 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                     );
                   }).toList(),
                 ),
+                const SizedBox(height: 16),
+                // 개인 등록금 및 커버 비율
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '개인 등록금 (원)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: tuitionCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: '예: 4000000',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                  ),
+                  onChanged: (v) {
+                    personalTuition = int.tryParse(v) ?? 0;
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '요구 장학금 커버 비율 (%)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [0, 10, 30, 50, 100].map((pct) {
+                    final selected = minPercentage == pct;
+                    return GestureDetector(
+                      onTap: () => set(() => minPercentage = pct),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? Colors.teal.shade600
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: selected
+                                ? Colors.teal.shade600
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Text(
+                          pct == 0 ? '제한없음' : '$pct% 이상',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: selected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: selected
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
@@ -769,6 +869,8 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                   _incomeLevel = income;
                   _awardedLastSemester = awarded;
                   _minAmount = minAmount;
+                  _personalTuition = personalTuition;
+                  _minPercentage = minPercentage;
                 });
                 Navigator.pop(ctx);
                 _load();
