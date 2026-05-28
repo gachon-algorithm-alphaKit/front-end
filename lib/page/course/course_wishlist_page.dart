@@ -70,25 +70,14 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
       if (result.unauthorized) {
         await AuthApi.logout();
         if (!mounted) return;
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginPage(sessionExpired: true)),
-          (route) => false,
-        );
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginPage(sessionExpired: true)), (route) => false);
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message), backgroundColor: Colors.red.shade400),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message), backgroundColor: Colors.red.shade400));
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message),
-          backgroundColor: Colors.amber.shade800,
-          duration: const Duration(seconds: 1),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message), backgroundColor: Colors.amber.shade800, duration: const Duration(seconds: 1)));
     }
   }
 
@@ -99,11 +88,7 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
       appBar: AppBar(
         title: Text(
           '찜한 강의 (${_wished.length})',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 18,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
         ),
         backgroundColor: Colors.amber.shade800,
         centerTitle: true,
@@ -117,28 +102,18 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.favorite_border_rounded,
-                    size: 72,
-                    color: Colors.grey.shade300,
-                  ),
+                  Icon(Icons.favorite_border_rounded, size: 72, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
-                  Text(
-                    '찜한 강의가 없습니다',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
-                  ),
+                  Text('찜한 강의가 없습니다', style: TextStyle(fontSize: 16, color: Colors.grey.shade500)),
                   const SizedBox(height: 6),
-                  Text(
-                    '강의 검색 후 ♥ 버튼을 눌러 찜하세요',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-                  ),
+                  Text('강의 검색 후 ♥ 버튼을 눌러 찜하세요', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
                 ],
               ),
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _wished.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final c = _wished[i];
                 return Card(
@@ -149,72 +124,35 @@ class _CourseWishlistPageState extends State<CourseWishlistPage> {
                     side: BorderSide(color: Colors.amber.shade200, width: 1.2),
                   ),
                   child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     leading: Container(
                       width: 40,
                       height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade50,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(10)),
                       alignment: Alignment.center,
                       child: Text(
                         c.courseCode,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.amber.shade800,
-                          fontSize: 11,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade800, fontSize: 11),
                       ),
                     ),
-                    title: Text(
-                      c.courseName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${CourseService.professorNameFor(c)} | ${c.majorTerm} | ${c.classTimeLabel}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
+                    title: Text(c.courseName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    subtitle: Text('${CourseService.professorNameFor(c)} | ${c.majorTerm} | ${c.classTimeLabel}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                     trailing: _removingIds.contains(c.courseId)
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
                         : GestureDetector(
                             onTap: () => _handleRemove(c.courseId),
-                            child: const Icon(
-                              Icons.favorite_rounded,
-                              color: Colors.redAccent,
-                              size: 22,
-                            ),
+                            child: const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 22),
                           ),
                     children: [
                       const Divider(height: 1),
                       const SizedBox(height: 12),
                       Text(
                         '강의 계획 요약',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.grey.shade700),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        c.description,
-                        style: const TextStyle(fontSize: 13, height: 1.5),
-                      ),
+                      Text(c.description, style: const TextStyle(fontSize: 13, height: 1.5)),
                     ],
                   ),
                 );

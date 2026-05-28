@@ -1,17 +1,45 @@
-# alpha_kit
+# AlphaKit Frontend (App)
 
-A new Flutter project.
+AlphaKit 프로젝트의 모바일 클라이언트 어플리케이션입니다. **Flutter** 프레임워크를 기반으로 작성되었으며, iOS와 Android 양대 플랫폼을 모두 지원합니다.
 
-## Getting Started
+## 🛠 기술 스택
 
-This project is a starting point for a Flutter application.
+- **프레임워크**: Flutter SDK (^3.12.0)
+- **언어**: Dart
+- **주요 패키지**:
+  - `http`: 백엔드 REST API와의 네트워크 통신
+  - `shared_preferences`: 사용자 설정 및 로컬 데이터(JWT 토큰 등) 캐싱
+  - `image_picker`: 분실물 게시판 등에서의 이미지 업로드 지원
+  - `url_launcher`: 외부 웹사이트 링크 및 이메일 연동
 
-A few resources to get you started if this is your first Flutter project:
+## 🚀 프로젝트 설정 및 실행 방법
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+1. **Flutter SDK 설치 및 환경 설정**
+   Flutter 공식 홈페이지의 가이드에 따라 SDK를 설치하고 환경 변수를 설정합니다. (`flutter doctor` 명령어로 개발 환경 상태 점검 가능)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2. **의존성 패키지 설치**
+   프로젝트 폴더(`d:\project\AlphaKit\front-end`) 경로에서 아래 명령어를 실행하여 `pubspec.yaml`에 정의된 패키지들을 설치합니다.
+   ```bash
+   flutter pub get
+   ```
+
+3. **앱 실행**
+   에뮬레이터(Android/iOS)를 띄우거나 실기기를 연결한 상태에서 아래 명령어로 앱을 빌드하고 실행합니다.
+   ```bash
+   flutter run
+   ```
+
+## 📱 주요 화면 및 기능
+
+백엔드 서버와 연동하여 다음과 같은 화면과 기능을 제공합니다:
+- **로그인 및 홈 화면**: 학생 인증 및 캠퍼스 대시보드
+- **시간표 및 수강 내역**: 본인의 수강 정보 및 찜한 강의 목록 시각화
+- **캠퍼스 맵 네비게이션**: 교내 맵뷰 및 주요 건물 간 길찾기 경로 안내
+- **장학금 및 스터디룸 조회**: 현재 신청 가능한 장학금 및 스터디룸 예약 화면
+- **커뮤니티 (분실물 게시판 등)**: 학생 간 소통을 위한 UI 및 사진 첨부 폼
+
+## 📂 디렉터리 구조 안내
+
+- `lib/`: 애플리케이션의 핵심 소스 코드 (UI, 상태 관리, 모델, API 서비스 연동 등)
+- `assets/`: 앱에서 사용하는 아이콘(`assets/icon/alphakit.png`) 및 이미지 리소스
+- `pubspec.yaml`: 프로젝트 메타데이터 및 외부 패키지 의존성 정의 파일
