@@ -96,11 +96,18 @@ class RoomRecommendation {
   final bool isSplitBooking;
   final List<Map<String, int>> splitSlots;
 
-  const RoomRecommendation({
+  bool isAvailable;
+  bool isMyReservation;
+  List<bool> bookedSlots;
+
+  RoomRecommendation({
     required this.room,
     required this.score,
     this.isSplitBooking = false,
     this.splitSlots = const [],
+    this.isAvailable = true,
+    this.isMyReservation = false,
+    this.bookedSlots = const [],
   });
 }
 

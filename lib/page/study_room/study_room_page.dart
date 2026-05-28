@@ -19,6 +19,37 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
   final _selectedFacilities = <String>[];
   List<RoomRecommendation> _results = [];
   bool _isLoading = false, _searched = false;
+  int _page = 1;
+  bool _hasMore = false;
+  bool _isFetchingMore = false;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyReservations();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 && !_isLoading && !_isFetchingMore && _hasMore) {
+        _fetchMore();
+      }
+    });
+  }
+
+  Future<void> _loadMyReservations() async {
+    final reservations = await StudyRoomService.fetchMyReservations();
+    if (mounted) {
+      setState(() {
+        myReservations.clear();
+        myReservations.addAll(reservations);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   Future<void> _search() async {
     if (_startHour >= _endHour) {
@@ -36,36 +67,61 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
     setState(() {
       _isLoading = true;
       _searched = true;
+      _page = 1;
       _results = [];
     });
     try {
-      // TODO: StudyRoomService.recommend → Bitset + PriorityQueue + Backtracking 처리
       final r = await StudyRoomService.recommend(
         _date,
         _startHour,
         _endHour,
         _capacity,
         _selectedFacilities,
+        page: _page,
       );
-      setState(() => _results = r);
+      setState(() {
+        _results = r['list'] as List<RoomRecommendation>;
+        _hasMore = r['hasMore'] as bool;
+      });
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
+  Future<void> _fetchMore() async {
+    setState(() => _isFetchingMore = true);
+    try {
+      _page++;
+      final r = await StudyRoomService.recommend(
+        _date,
+        _startHour,
+        _endHour,
+        _capacity,
+        _selectedFacilities,
+        page: _page,
+      );
+      setState(() {
+        _results.addAll(r['list'] as List<RoomRecommendation>);
+        _hasMore = r['hasMore'] as bool;
+      });
+    } finally {
+      setState(() => _isFetchingMore = false);
+    }
+  }
+
   Future<void> _reserve(RoomRecommendation rec) async {
-    // TODO: StudyRoomService.reserve → Bitset OR 예약 확정
-    final ok = await StudyRoomService.reserve(
+    final reservationId = await StudyRoomService.reserve(
       rec.room.roomId,
       _date,
       _startHour,
       _endHour,
+      _capacity,
     );
-    if (ok && mounted) {
+    if (reservationId != null && mounted) {
       // 예약 내역 저장
       myReservations.add(
         StudyRoomReservation(
-          id: 'R${DateTime.now().millisecondsSinceEpoch}',
+          id: reservationId,
           roomName: rec.room.name,
           location: StudyRoomService.locationFor(rec.room),
           date:
@@ -74,28 +130,30 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
           endHour: _endHour,
         ),
       );
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green),
-              SizedBox(width: 8),
-              Text('예약 완료', style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Text(
-            '${rec.room.name} 예약이 완료되었습니다.\n$_startHour:00 ~ $_endHour:00',
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('확인'),
-            ),
-          ],
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${rec.room.name} 예약이 완료되었습니다.'),
+          backgroundColor: Colors.green.shade600,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      rec.isAvailable = false;
+      rec.isMyReservation = true;
+      for (int i = _startHour; i < _endHour; i++) {
+        if (i >= 8 && i < 22) {
+          if (rec.bookedSlots.length > i - 8) {
+            rec.bookedSlots[i - 8] = true;
+          }
+        }
+      }
+      setState(() {});
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('예약 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
@@ -119,9 +177,15 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.history_rounded, color: Colors.white),
-            tooltip: '예약 내역',
+          TextButton.icon(
+            icon: const Icon(Icons.event_note, color: Colors.white),
+            label: Text(
+              '예약 내역(${myReservations.length})',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -137,7 +201,8 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // 조건 설정 카드
@@ -201,7 +266,11 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
                       _hourSelector(
                         '시작',
                         _startHour,
-                        (v) => setState(() => _startHour = v),
+                        (v) => setState(() {
+                          _startHour = v;
+                          if (_endHour <= _startHour) _endHour = _startHour + 1;
+                          if (_endHour - _startHour > 4) _endHour = _startHour + 4;
+                        }),
                         8,
                         20,
                       ),
@@ -219,8 +288,8 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
                         '종료',
                         _endHour,
                         (v) => setState(() => _endHour = v),
-                        9,
-                        22,
+                        _startHour + 1,
+                        (_startHour + 4 > 22) ? 22 : _startHour + 4,
                       ),
                       const Spacer(),
                       Container(
@@ -330,73 +399,62 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
               ),
             ),
 
-            // 결과
-            if (_searched && !_isLoading) ...[
-              const SizedBox(height: 16),
-              if (_results.isEmpty)
-                buildCard(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.event_busy,
-                            size: 48,
-                            color: Colors.grey.shade300,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '해당 조건의 스터디룸이 없습니다.\n시간 분할 매칭(백트래킹)을 시도해보세요.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey.shade500,
-                              fontSize: 13,
+              // 결과
+              if (_searched && !_isLoading) ...[
+                const SizedBox(height: 16),
+                if (_results.isEmpty)
+                  buildCard(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.event_busy,
+                              size: 48,
+                              color: Colors.grey.shade300,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-              else ...[
-                Row(
-                  children: [
-                    const Text(
-                      '추천 스터디룸',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // TODO: 백엔드에서 우선순위 큐 결과 Top 3 반환
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'PriorityQueue 결과',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.green.shade700,
+                            const SizedBox(height: 8),
+                            Text(
+                              '해당 조건의 스터디룸이 없습니다.\n시간 분할 매칭(백트래킹)을 시도해보세요.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      const Text(
+                        '추천 스터디룸',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                 ..._results.asMap().entries.map(
                   (e) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _roomCard(e.value, e.key == 0),
                   ),
                 ),
+                if (_isFetchingMore)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
               ],
             ],
             const SizedBox(height: 24),
@@ -510,6 +568,27 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
                         ),
                       ),
                     ],
+                    if (rec.isMyReservation) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade600,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '내가 예약함',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -532,20 +611,48 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
                       )
                       .toList(),
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: List.generate(14, (i) {
+                    final isBooked = rec.bookedSlots.length > i ? rec.bookedSlots[i] : false;
+                    return Expanded(
+                      child: Container(
+                        height: 4,
+                        margin: EdgeInsets.only(right: i < 13 ? 2.0 : 0.0),
+                        decoration: BoxDecoration(
+                          color: isBooked ? Colors.grey.shade400 : Colors.green.shade500,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('08시', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                    Text('22시', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                  ],
+                ),
               ],
             ),
           ),
           const SizedBox(width: 8),
           FilledButton(
-            onPressed: () => _reserve(rec),
+            onPressed: rec.isAvailable ? () => _reserve(rec) : null,
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.green.shade600,
+              backgroundColor: rec.isAvailable ? Colors.green.shade600 : Colors.grey.shade400,
+              disabledBackgroundColor: Colors.grey.shade300,
               minimumSize: const Size(60, 36),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('예약', style: TextStyle(fontSize: 13)),
+            child: Text(
+              rec.isAvailable ? '예약' : '마감',
+              style: const TextStyle(fontSize: 13),
+            ),
           ),
         ],
       ),

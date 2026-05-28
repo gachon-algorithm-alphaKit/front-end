@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../model/route_model.dart';
 import '../model/study_room_model.dart';
 
@@ -8,42 +11,169 @@ class StudyRoomService {
     return _mockRooms;
   }
 
-  // TODO: POST /api/studyrooms/recommend
-  static Future<List<RoomRecommendation>> recommend(
+  static const String baseUrl = 'http://10.0.2.2:8000';
+
+  static Future<Map<String, dynamic>> recommend(
     DateTime date,
     int startHour,
     int endHour,
     int capacity,
-    List<String> facilities,
-  ) async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    List<String> facilities, {
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final start = DateTime(date.year, date.month, date.day, startHour).toIso8601String();
+    final end = DateTime(date.year, date.month, date.day, endHour).toIso8601String();
 
-    final results = <RoomRecommendation>[];
-    for (final room in _mockRooms) {
-      double score = 100;
-      score -= (room.capacity - capacity).abs() * 5.0;
-      for (final f in facilities) {
-        if (room.facilityList.contains(f)) {
-          score += 10;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/rooms/recommend/'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'school_id': 1,
+          'start_time': start,
+          'end_time': end,
+          'head_count': capacity,
+          'facilities': facilities,
+          'page': page,
+          'limit': limit,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          final List data = decoded['data']['recommendations'] ?? [];
+          final bool hasMore = (decoded['data']['pagination']['current_page'] < decoded['data']['pagination']['total_pages']);
+          final list = data.map((json) {
+            final room = StudyRoom(
+              roomId: json['room_id'],
+              placeId: json['place_id'] ?? 0,
+              name: json['name'],
+              capacity: json['capacity'],
+              facilities: (json['facilities'] as List).join(','),
+            );
+            return RoomRecommendation(
+              room: room,
+              score: (json['score'] as num).toDouble(),
+              isAvailable: json['is_available'] ?? true,
+              isMyReservation: json['is_my_reservation'] ?? false,
+              bookedSlots: List<bool>.from(json['booked_slots'] ?? List.filled(14, false)),
+            );
+          }).toList();
+          return {'list': list, 'hasMore': hasMore};
         }
       }
-      if (score > 0) {
-        results.add(RoomRecommendation(room: room, score: score.clamp(0, 100)));
-      }
+    } catch (e) {
+      print('Error fetching recommendations: $e');
     }
-    results.sort((a, b) => b.score.compareTo(a.score));
-    return results.take(3).toList();
+    return {'list': <RoomRecommendation>[], 'hasMore': false};
   }
 
-  // TODO: POST /api/studyrooms/reserve
-  static Future<bool> reserve(
+  // POST /api/rooms/reserve/
+  static Future<String?> reserve(
     int roomId,
     DateTime date,
     int startHour,
     int endHour,
+    int capacity,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return true;
+    final start = DateTime(date.year, date.month, date.day, startHour).toIso8601String();
+    final end = DateTime(date.year, date.month, date.day, endHour).toIso8601String();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/rooms/reserve/'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'room_id': roomId,
+          'start_time': start,
+          'end_time': end,
+          'head_count': capacity,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          return decoded['data']['reservation_id'].toString();
+        }
+      }
+    } catch (e) {
+      print('Error reserving room: $e');
+    }
+    return null;
+  }
+
+  // GET /api/rooms/reservations/
+  static Future<List<StudyRoomReservation>> fetchMyReservations() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/rooms/reservations/'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          final List data = decoded['data']['reservations'] ?? [];
+          return data.map((json) => StudyRoomReservation(
+            id: json['id'],
+            roomName: json['roomName'],
+            location: json['location'],
+            date: json['date'],
+            startHour: json['startHour'],
+            endHour: json['endHour'],
+          )).toList();
+        }
+      }
+    } catch (e) {
+      print('Error fetching my reservations: $e');
+    }
+    return [];
+  }
+
+  // DELETE /api/rooms/reservations/<id>/
+  static Future<bool> cancelReservation(String reservationId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      
+      final response = await http.delete(
+        Uri.parse('$baseUrl/api/rooms/reservations/$reservationId/'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          return true;
+        }
+      }
+    } catch (e) {
+      print('Error cancelling reservation: $e');
+    }
+    return false;
   }
 
   static String locationFor(StudyRoom room) {

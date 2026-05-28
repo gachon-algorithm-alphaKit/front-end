@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../model/study_room_model.dart';
+import '../../api/study_room_service.dart';
 
 class StudyRoomReservationHistoryPage extends StatefulWidget {
   final List<StudyRoomReservation> reservations;
@@ -124,31 +125,44 @@ class _StudyRoomReservationHistoryPageState
     );
 
     if (confirmed == true) {
-      setState(() => _reservations.remove(res));
-      widget.onCancel?.call(res);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_outline,
-                    color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${res.roomName} 예약이 취소되었습니다.',
-                    style: const TextStyle(fontSize: 13),
+      final success = await StudyRoomService.cancelReservation(res.id);
+      if (success) {
+        setState(() => _reservations.remove(res));
+        widget.onCancel?.call(res);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline,
+                      color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${res.roomName} 예약이 취소되었습니다.',
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 3),
             ),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('예약 취소에 실패했습니다. 다시 시도해주세요.'),
+              backgroundColor: Colors.grey.shade800,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }
