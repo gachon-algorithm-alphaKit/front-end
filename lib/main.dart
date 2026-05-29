@@ -6,6 +6,8 @@ import 'model/user_profile.dart';
 import 'page/login/login_page.dart';
 import 'page/dashboard_page.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -15,7 +17,7 @@ void main() {
       systemNavigationBarColor: Colors.transparent,
     ),
   );
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {

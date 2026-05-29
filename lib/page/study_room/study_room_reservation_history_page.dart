@@ -1,32 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../model/study_room_model.dart';
 import '../../api/study_room_service.dart';
+import '../../provider/reservation_provider.dart';
 
-class StudyRoomReservationHistoryPage extends StatefulWidget {
-  final List<StudyRoomReservation> reservations;
-  final ValueChanged<StudyRoomReservation>? onCancel;
-
-  const StudyRoomReservationHistoryPage({
-    super.key,
-    required this.reservations,
-    this.onCancel,
-  });
+class StudyRoomReservationHistoryPage extends ConsumerStatefulWidget {
+  const StudyRoomReservationHistoryPage({super.key});
 
   @override
-  State<StudyRoomReservationHistoryPage> createState() =>
+  ConsumerState<StudyRoomReservationHistoryPage> createState() =>
       _StudyRoomReservationHistoryPageState();
 }
 
 class _StudyRoomReservationHistoryPageState
-    extends State<StudyRoomReservationHistoryPage> {
-  late List<StudyRoomReservation> _reservations;
-
-  @override
-  void initState() {
-    super.initState();
-    _reservations = List.from(widget.reservations);
-  }
+    extends ConsumerState<StudyRoomReservationHistoryPage> {
 
   Future<void> _confirmCancel(StudyRoomReservation res) async {
     final confirmed = await showDialog<bool>(
@@ -127,8 +115,7 @@ class _StudyRoomReservationHistoryPageState
     if (confirmed == true) {
       final success = await StudyRoomService.cancelReservation(res.id);
       if (success) {
-        setState(() => _reservations.remove(res));
-        widget.onCancel?.call(res);
+        ref.read(reservationProvider.notifier).cancelReservation(res.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -169,6 +156,8 @@ class _StudyRoomReservationHistoryPageState
 
   @override
   Widget build(BuildContext context) {
+    final _reservations = ref.watch(reservationProvider);
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(

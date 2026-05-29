@@ -1,28 +1,28 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/auth_api.dart';
 import '../../api/course_service.dart';
-import '../../api/wishlist_service.dart';
 import '../../model/course_model.dart';
-import '../../state/app_state.dart';
+import '../../provider/wishlist_provider.dart';
 import '../login/login_page.dart';
 import 'course_wishlist_page.dart';
 
-class CourseSearchPage extends StatefulWidget {
+class CourseSearchPage extends ConsumerStatefulWidget {
   const CourseSearchPage({super.key});
   @override
-  State<CourseSearchPage> createState() => _CourseSearchPageState();
+  ConsumerState<CourseSearchPage> createState() => _CourseSearchPageState();
 }
 
-class _CourseSearchPageState extends State<CourseSearchPage> {
+class _CourseSearchPageState extends ConsumerState<CourseSearchPage> {
   SearchType _type = SearchType.name;
   final bool _isChoseong = false;
   final _ctrl = TextEditingController();
   List<Course> _results = [];
   bool _isLoading = false, _searched = false;
   Timer? _debounce;
-  final Set<int> _togglingIds = {}; // 현재 토글 요청 중인 강의 ID (중복 클릭 방지)
+  final Set<int> _togglingIds = {};
 
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
@@ -33,7 +33,6 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _initWishlist();
   }
 
   void _onScroll() {
@@ -44,71 +43,22 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
     }
   }
 
-  Future<void> _initWishlist() async {
-    await WishlistService.fetchWishlistIds();
-    if (mounted) setState(() {});
-  }
-
-  /// 낙관적 업데이트 기반 찜 토글
   Future<void> _handleToggle(int courseId) async {
-    if (_togglingIds.contains(courseId)) return; // 이미 처리 중
+    if (_togglingIds.contains(courseId)) return;
 
-    final wasWished = wishlistCourseIds.contains(courseId);
-
-    // 1) 낙관적 업데이트: UI 즉시 변경
     setState(() {
       _togglingIds.add(courseId);
-      if (wasWished) {
-        wishlistCourseIds.remove(courseId);
-      } else {
-        wishlistCourseIds.add(courseId);
-      }
     });
 
-    // 2) 서버 요청
-    final result = await WishlistService.toggleWishlist(courseId);
+    await ref.read(wishlistProvider.notifier).toggle(courseId);
 
-    // 3) 결과 처리
-    setState(() {
-      _togglingIds.remove(courseId);
-    });
-
-    if (!result.success) {
-      // 롤백
+    if (mounted) {
       setState(() {
-        if (wasWished) {
-          wishlistCourseIds.add(courseId);
-        } else {
-          wishlistCourseIds.remove(courseId);
-        }
+        _togglingIds.remove(courseId);
       });
-
-      if (!mounted) return;
-
-      if (result.unauthorized) {
-        await AuthApi.logout();
-        if (!mounted) return;
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginPage(sessionExpired: true)),
-          (route) => false,
-        );
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message), backgroundColor: Colors.red.shade400),
-      );
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message),
-          backgroundColor: Colors.amber.shade800,
-          duration: const Duration(seconds: 1),
-        ),
-      );
     }
   }
+
 
   @override
   void dispose() {
@@ -170,6 +120,8 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final wishlist = ref.watch(wishlistProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -197,14 +149,14 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
               setState(() {});
             },
             icon: Icon(
-              wishlistCourseIds.isNotEmpty
+              wishlist.isNotEmpty
                   ? Icons.bookmark_rounded
                   : Icons.bookmark_border_rounded,
               color: Colors.white,
               size: 20,
             ),
             label: Text(
-              '찜 목록${wishlistCourseIds.isNotEmpty ? ' (${wishlistCourseIds.length})' : ''}',
+              '찜 목록${wishlist.isNotEmpty ? ' (${wishlist.length})' : ''}',
               style: const TextStyle(color: Colors.white, fontSize: 13),
             ),
           ),
@@ -386,7 +338,7 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
                           child: Center(child: CircularProgressIndicator()),
                         );
                       }
-                      return _courseCard(_results[i]);
+                      return _courseCard(_results[i], wishlist);
                     },
                   ),
           ),
@@ -395,8 +347,8 @@ class _CourseSearchPageState extends State<CourseSearchPage> {
     );
   }
 
-  Widget _courseCard(Course c) {
-    final isWished = wishlistCourseIds.contains(c.courseId);
+  Widget _courseCard(Course c, Set<int> wishlist) {
+    final isWished = wishlist.contains(c.courseId);
     return Card(
       elevation: 0,
       color: Colors.white,

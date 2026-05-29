@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/study_room_service.dart';
 import '../../component/common_widgets.dart';
 import '../../model/study_room_model.dart';
-import '../../state/app_state.dart';
+import '../../provider/reservation_provider.dart';
 import 'study_room_reservation_history_page.dart';
 
-class StudyRoomPage extends StatefulWidget {
+class StudyRoomPage extends ConsumerStatefulWidget {
   const StudyRoomPage({super.key});
   @override
-  State<StudyRoomPage> createState() => _StudyRoomPageState();
+  ConsumerState<StudyRoomPage> createState() => _StudyRoomPageState();
 }
 
-class _StudyRoomPageState extends State<StudyRoomPage> {
+class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
   DateTime _date = DateTime.now();
   int _startHour = 10, _endHour = 12, _capacity = 4;
   final _allFacilities = ['TV', '화이트보드', '빔프로젝터', 'HDMI'];
@@ -38,10 +39,7 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
   Future<void> _loadMyReservations() async {
     final reservations = await StudyRoomService.fetchMyReservations();
     if (mounted) {
-      setState(() {
-        myReservations.clear();
-        myReservations.addAll(reservations);
-      });
+      ref.read(reservationProvider.notifier).sync(reservations);
     }
   }
 
@@ -119,7 +117,7 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
     );
     if (reservationId != null && mounted) {
       // 예약 내역 저장
-      myReservations.add(
+      ref.read(reservationProvider.notifier).addReservation(
         StudyRoomReservation(
           id: reservationId,
           roomName: rec.room.name,
@@ -161,6 +159,8 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
 
   @override
   Widget build(BuildContext context) {
+    final myReservations = ref.watch(reservationProvider);
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -189,12 +189,7 @@ class _StudyRoomPageState extends State<StudyRoomPage> {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => StudyRoomReservationHistoryPage(
-                  reservations: myReservations,
-                  onCancel: (cancelled) {
-                    setState(() => myReservations.remove(cancelled));
-                  },
-                ),
+                builder: (_) => const StudyRoomReservationHistoryPage(),
               ),
             ),
           ),
