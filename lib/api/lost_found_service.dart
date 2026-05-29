@@ -149,30 +149,6 @@ class LostFoundService {
     return true;
   }
 
-  static Future<List<String>> nameSuggestions(String keyword) async {
-    try {
-      final headers = await _getJsonAuthHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/lost-items/suggestions/'),
-        headers: headers,
-        body: jsonEncode({
-          'keyword': keyword,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-        if (decoded['status'] == 'success') {
-          final List data = decoded['data'] ?? [];
-          return data.map((e) => e['name'] as String).toList();
-        }
-      }
-    } catch (e) {
-      print('Error fetching name suggestions: $e');
-    }
-    return [];
-  }
-
   /// 게시글 삭제
   static Future<bool> deletePost(int itemId) async {
     try {

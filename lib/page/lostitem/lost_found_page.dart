@@ -26,7 +26,6 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
   final int _limit = 10;
   Timer? _debounce;
   final ScrollController _scrollController = ScrollController();
-  List<String> _suggestions = []; // Holds name suggestion results
 
   @override
   void initState() {
@@ -207,52 +206,15 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                                   : null,
                             ),
                             onSubmitted: (_) => _search(),
-                            onChanged: (val) async {
+                            onChanged: (val) {
                               // Cancel previous debounce
                               if (_debounce?.isActive ?? false) _debounce!.cancel();
-                              // Fetch suggestions after short delay
-                              _debounce = Timer(const Duration(milliseconds: 300), () async {
-                                try {
-                                  final suggestions = await LostFoundService.nameSuggestions(_ctrl.text.trim());
-                                  setState(() {
-                                    _suggestions = suggestions.take(5).toList();
-                                  });
-                                } catch (e) {
-                                  // ignore errors
-                                }
+                              // Search after short delay
+                              _debounce = Timer(const Duration(milliseconds: 300), () {
                                 _search();
                               });
                             },
                           ),
-                          if (_suggestions.isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.only(top: 4),
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
-                                ],
-                              ),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: _suggestions.length,
-                                itemBuilder: (context, idx) {
-                                  final sug = _suggestions[idx];
-                                  return ListTile(
-                                    dense: true,
-                                    title: Text(sug),
-                                    onTap: () {
-                                      _ctrl.text = sug;
-                                      setState(() => _suggestions = []);
-                                      _search();
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
                         ],
                       ),
                     ),
