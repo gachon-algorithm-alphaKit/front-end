@@ -8,6 +8,7 @@ import 'lostitem/lost_found_page.dart';
 import 'profile_settings_page.dart';
 import 'scholarship/scholarship_page.dart';
 import 'study_room/study_room_page.dart';
+import 'game/game_dashboard_page.dart';
 
 class MainDashboardPage extends StatefulWidget {
   final UserProfile? initialProfile;
@@ -79,6 +80,12 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
       'icon': Icons.monetization_on_rounded,
       'color': null,
     },
+    {
+      'title': '밸런스 게임',
+      'sub': '흑백 논란 실시간 토론',
+      'icon': Icons.how_to_vote_rounded,
+      'color': Colors.deepPurple,
+    },
   ];
 
   Color _cardColor(int i) {
@@ -88,6 +95,7 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
       Colors.green.shade600,
       Colors.redAccent,
       Colors.teal.shade600,
+      Colors.deepPurple,
     ];
     return colors[i];
   }
@@ -104,6 +112,8 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
         return const LostFoundPage();
       case 4:
         return ScholarshipPage(profile: _profile);
+      case 5:
+        return const GameDashboardPage();
       default:
         return const CampusNavigationPage();
     }
@@ -200,7 +210,13 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _wideCard(4),
+                  Row(
+                    children: [
+                      Expanded(child: _serviceCard(4)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _serviceCard(5)),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -265,67 +281,6 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _wideCard(int i) {
-    final color = _cardColor(i);
-    final card = _cards[i];
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: InkWell(
-        onTap: () => _goTo(_getPage(i)),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(card['icon'] as IconData, color: color, size: 32),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      card['title'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      card['sub'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: Colors.grey.shade400,
-                size: 16,
-              ),
-            ],
           ),
         ),
       ),
