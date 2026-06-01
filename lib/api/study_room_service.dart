@@ -48,31 +48,88 @@ class StudyRoomService {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         if (decoded['status'] == 'success') {
+          final String matchType = decoded['data']['match_type'] ?? 'SINGLE';
           final List data = decoded['data']['recommendations'] ?? [];
           final bool hasMore = (decoded['data']['pagination']['current_page'] < decoded['data']['pagination']['total_pages']);
-          final list = data.map((json) {
-            final room = StudyRoom(
-              roomId: json['room_id'],
-              placeId: json['place_id'] ?? 0,
-              name: json['name'],
-              capacity: json['capacity'],
-              facilities: (json['facilities'] as List).join(','),
-            );
-            return RoomRecommendation(
-              room: room,
-              score: (json['score'] as num).toDouble(),
-              isAvailable: json['is_available'] ?? true,
-              isMyReservation: json['is_my_reservation'] ?? false,
-              bookedSlots: List<bool>.from(json['booked_slots'] ?? List.filled(14, false)),
-            );
-          }).toList();
-          return {'list': list, 'hasMore': hasMore};
+          
+          if (matchType == 'COMBINED') {
+            final list = data.map((json) {
+              return RoomRecommendation(
+                room: const StudyRoom(roomId: 0, placeId: 0, name: '공실 조합 추천', capacity: 0, facilities: ''),
+                score: (json['total_score'] as num).toDouble(),
+                isSplitBooking: true,
+                comboSlots: json['slots'] ?? [],
+              );
+            }).toList();
+            return {'list': list, 'hasMore': hasMore};
+          } else {
+            final list = data.map((json) {
+              final room = StudyRoom(
+                roomId: json['room_id'],
+                placeId: json['place_id'] ?? 0,
+                name: json['name'],
+                capacity: json['capacity'],
+                facilities: (json['facilities'] as List).join(','),
+              );
+              return RoomRecommendation(
+                room: room,
+                score: (json['score'] as num).toDouble(),
+                isAvailable: json['is_available'] ?? true,
+                isMyReservation: json['is_my_reservation'] ?? false,
+                bookedSlots: List<bool>.from(json['booked_slots'] ?? List.filled(14, false)),
+              );
+            }).toList();
+            return {'list': list, 'hasMore': hasMore};
+          }
         }
       }
     } catch (e) {
       print('Error fetching recommendations: $e');
     }
     return {'list': <RoomRecommendation>[], 'hasMore': false};
+  }
+
+  // POST /api/rooms/reserve_combo/
+  static Future<List<String>?> reserveCombo(
+    List<dynamic> comboSlots,
+    int capacity,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+
+      final slots = comboSlots.map((slot) {
+        return {
+          'room_id': slot['room_id'],
+          'start_time': slot['start_time'],
+          'end_time': slot['end_time'],
+        };
+      }).toList();
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/rooms/reserve_combo/'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'slots': slots,
+          'head_count': capacity,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['status'] == 'success') {
+          return List<String>.from(decoded['data']['reservation_ids'].map((x) => x.toString()));
+        }
+      } else {
+        print('Error combo reserving: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error combo reserving: $e');
+    }
+    return null;
   }
 
   // POST /api/rooms/reserve/

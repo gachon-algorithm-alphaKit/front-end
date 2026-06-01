@@ -404,16 +404,29 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                 if (isAvailable)
                   TextButton(
                     onPressed: () async {
-                      // TODO: LostFoundService.claimItem → 분실물 수령 신청
-                      await LostFoundService.claimItem(item.itemId);
+                      final success = await LostFoundService.claimItem(item.itemId);
                       if (!mounted) {
                         return;
                       }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${item.itemName} 수령 신청이 완료되었습니다.'),
-                        ),
-                      );
+                      if (success) {
+                        setState(() {
+                          final idx = _results.indexWhere((e) => e.itemId == item.itemId);
+                          if (idx != -1) {
+                            _results[idx] = _results[idx].copyWith(status: true);
+                          }
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${item.itemName} 수령 신청이 완료되었습니다.'),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('수령 신청에 실패했습니다.'),
+                          ),
+                        );
+                      }
                     },
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.redAccent,

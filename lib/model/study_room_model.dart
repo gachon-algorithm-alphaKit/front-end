@@ -94,7 +94,7 @@ class RoomRecommendation {
   final StudyRoom room;
   final double score;
   final bool isSplitBooking;
-  final List<Map<String, int>> splitSlots;
+  final List<dynamic> comboSlots;
 
   bool isAvailable;
   bool isMyReservation;
@@ -104,7 +104,7 @@ class RoomRecommendation {
     required this.room,
     required this.score,
     this.isSplitBooking = false,
-    this.splitSlots = const [],
+    this.comboSlots = const [],
     this.isAvailable = true,
     this.isMyReservation = false,
     this.bookedSlots = const [],

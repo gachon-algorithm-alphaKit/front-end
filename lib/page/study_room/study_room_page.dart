@@ -281,178 +281,209 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                       ),
                       _hourSelector(
                         '종료',
-                        _endHour,
-                        (v) => setState(() => _endHour = v),
-                        _startHour + 1,
-                        (_startHour + 4 > 22) ? 22 : _startHour + 4,
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${_endHour - _startHour}시간',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.green.shade700,
-                            fontWeight: FontWeight.bold,
+                  const Text(
+                    '예약 조건',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 20, color: Colors.green.shade600),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final d = await showDatePicker(
+                              context: context,
+                              initialDate: _date,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 30)),
+                            );
+                            if (d != null) setState(() => _date = d);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Text(
+                              '${_date.year}년 ${_date.month}월 ${_date.day}일',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-
-                  // 인원
-                  buildSectionLabel('인원'),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: _capacity > 1
-                            ? () => setState(() => _capacity--)
-                            : null,
-                        icon: const Icon(Icons.remove_circle_outline),
-                        color: Colors.green.shade600,
-                      ),
-                      Text(
-                        '$_capacity명',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      Icon(Icons.access_time, size: 20, color: Colors.green.shade600),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _hourSelector('시작', _startHour, (v) => setState(() => _startHour = v), 8, 21),
+                            Text('~', style: TextStyle(fontSize: 18, color: Colors.grey.shade400)),
+                            _hourSelector('종료', _endHour, (v) => setState(() => _endHour = v), 9, 22),
+                          ],
                         ),
-                      ),
-                      IconButton(
-                        onPressed: _capacity < 20
-                            ? () => setState(() => _capacity++)
-                            : null,
-                        icon: const Icon(Icons.add_circle_outline),
-                        color: Colors.green.shade600,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-
-                  // 시설 선택
-                  buildSectionLabel('희망 시설 (선택)'),
-                  Wrap(
-                    spacing: 8,
-                    children: _allFacilities.map((f) {
-                      final selected = _selectedFacilities.contains(f);
-                      return FilterChip(
-                        label: Text(f),
-                        selected: selected,
-                        onSelected: (v) => setState(
-                          () => v
-                              ? _selectedFacilities.add(f)
-                              : _selectedFacilities.remove(f),
-                        ),
-                        selectedColor: Colors.green.shade100,
-                        checkmarkColor: Colors.green.shade700,
-                        labelStyle: TextStyle(
-                          color: selected
-                              ? Colors.green.shade700
-                              : Colors.grey.shade700,
-                          fontSize: 13,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 검색
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _isLoading ? null : _search,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.search),
-                      label: Text(_isLoading ? '검색 중...' : '공실 검색 (Bitset 처리)'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.green.shade600,
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-              // 결과
-              if (_searched && !_isLoading) ...[
-                const SizedBox(height: 16),
-                if (_results.isEmpty)
-                  buildCard(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Icon(Icons.people_outline, size: 20, color: Colors.green.shade600),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.event_busy,
-                              size: 48,
-                              color: Colors.grey.shade300,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '해당 조건의 스터디룸이 없습니다.\n시간 분할 매칭(백트래킹)을 시도해보세요.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 13,
-                              ),
+                            const Text('이용 인원', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  color: Colors.green.shade600,
+                                  onPressed: _capacity > 1
+                                      ? () => setState(() => _capacity--)
+                                      : null,
+                                ),
+                                Text('$_capacity명', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  color: Colors.green.shade600,
+                                  onPressed: _capacity < 20
+                                      ? () => setState(() => _capacity++)
+                                      : null,
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('필요 시설', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _allFacilities.map((f) {
+                      final selected = _selectedFacilities.contains(f);
+                      return ChoiceChip(
+                        label: Text(f),
+                        selected: selected,
+                        onSelected: (v) {
+                          setState(() {
+                            if (v) {
+                              _selectedFacilities.add(f);
+                            } else {
+                              _selectedFacilities.remove(f);
+                            }
+                          });
+                        },
+                        selectedColor: Colors.green.shade100,
+                        labelStyle: TextStyle(
+                          color: selected ? Colors.green.shade800 : Colors.grey.shade700,
+                          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                        backgroundColor: Colors.grey.shade50,
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: _isLoading ? null : _search,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.green.shade600,
+                      minimumSize: const Size(double.infinity, 52),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                  )
-                else ...[
-                  Row(
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text('빈 방 찾기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (_searched && !_isLoading) ...[
+              if (_results.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  alignment: Alignment.center,
+                  child: Column(
                     children: [
-                      const Text(
-                        '추천 스터디룸',
+                      Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                      const SizedBox(height: 16),
+                      Text(
+                        '조건에 맞는 스터디룸이 없습니다.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                Row(
+                  children: [
+                    const Text(
+                      '추천 결과',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${_results.length}개',
                         style: TextStyle(
-                          fontSize: 15,
+                          color: Colors.green.shade800,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 ..._results.asMap().entries.map(
                   (e) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _roomCard(e.value, e.key == 0),
+                    child: e.value.isSplitBooking
+                        ? _comboRoomCard(e.value)
+                        : _roomCard(e.value, e.key == 0),
                   ),
                 ),
                 if (_isFetchingMore)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: Center(child: CircularProgressIndicator()),
                   ),
               ],
             ],
-            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -496,6 +527,75 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
       ),
     ],
   );
+
+  Widget _comboRoomCard(RoomRecommendation rec) {
+    return Card(
+      elevation: 0,
+      color: Colors.amber.shade50,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.amber.shade300, width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.link, color: Colors.amber.shade800),
+                const SizedBox(width: 8),
+                Text(
+                  '공실 조합 추천 (${rec.comboSlots.length}시간 연속)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.amber.shade900,
+                  ),
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: rec.isAvailable ? () => _reserve(rec) : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: rec.isAvailable ? Colors.amber.shade700 : Colors.grey.shade400,
+                    minimumSize: const Size(60, 36),
+                  ),
+                  child: Text(rec.isAvailable ? '일괄 예약' : '마감', style: const TextStyle(fontSize: 13)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text('요청하신 연속된 시간에 예약 가능한 단일 스터디룸이 없어, 시간대별로 이용 가능한 방을 조합했습니다.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+            const SizedBox(height: 12),
+            ...rec.comboSlots.map((slot) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text('${slot['start_hour']}:00 ~ ${slot['end_hour']}:00', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '${slot['name']} (${slot['place_name']})',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _roomCard(RoomRecommendation rec, bool isTop) => Card(
     elevation: 0,

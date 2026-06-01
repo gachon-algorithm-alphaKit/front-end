@@ -320,6 +320,21 @@ class _LostFoundPostDetailPageState extends ConsumerState<LostFoundPostDetailPag
         iconTheme: const IconThemeData(color: Colors.white),
         actions: isMine
             ? [
+                if (!_post.status)
+                  IconButton(
+                    icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                    tooltip: '수령 완료 (주인 찾음)',
+                    onPressed: () async {
+                      final success = await LostFoundService.claimItem(_post.itemId);
+                      if (success) {
+                        setState(() {
+                          _post = _post.copyWith(status: true);
+                        });
+                        widget.onEdit(_post);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('수령 처리가 완료되었습니다.')));
+                      }
+                    },
+                  ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, color: Colors.white),
                   tooltip: '수정',

@@ -26,17 +26,35 @@ class _TopicDetailPageState extends ConsumerState<TopicDetailPage>
   late TabController _tabController;
   Timer? _pollTimer;
   late Topic _topic;
+  bool _isPastTopic = false;
+  VoteStat? _pastTopicVoteStat;
 
   @override
   void initState() {
     super.initState();
     _topic = widget.topic;
+    _isPastTopic = !_topic.isActive;
     _tabController = TabController(length: 3, vsync: this);
 
-    // 투표 통계 폴링 (10초마다)
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      ref.read(activeTopicProvider.notifier).refreshStat();
-    });
+    if (!_isPastTopic) {
+      // 투표 통계 폴링 (10초마다)
+      _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+        ref.read(activeTopicProvider.notifier).refreshStat();
+      });
+    } else {
+      _fetchPastTopicStat();
+    }
+  }
+
+  Future<void> _fetchPastTopicStat() async {
+    try {
+      final stat = await ref.read(topicListProvider.notifier).fetchVoteStatForPastTopic(_topic.topicId);
+      if (mounted) {
+        setState(() {
+          _pastTopicVoteStat = stat;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -48,7 +66,7 @@ class _TopicDetailPageState extends ConsumerState<TopicDetailPage>
 
   Future<void> _handleVote(bool opinion) async {
     final activeState = ref.read(activeTopicProvider);
-    final currentTopic = activeState.topic ?? _topic;
+    final currentTopic = _topic.isActive ? (activeState.topic ?? _topic) : _topic;
 
     // 이미 같은 의견에 투표한 경우 무시
     if (currentTopic.myVote == opinion) return;
@@ -96,8 +114,8 @@ class _TopicDetailPageState extends ConsumerState<TopicDetailPage>
   @override
   Widget build(BuildContext context) {
     final activeState = ref.watch(activeTopicProvider);
-    final currentTopic = activeState.topic ?? _topic;
-    final voteStat = activeState.voteStat;
+    final currentTopic = _isPastTopic ? _topic : (activeState.topic ?? _topic);
+    final voteStat = _isPastTopic ? _pastTopicVoteStat : activeState.voteStat;
     final isActive = currentTopic.isActive;
 
     return Scaffold(

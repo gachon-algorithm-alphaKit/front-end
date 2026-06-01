@@ -190,6 +190,11 @@ class TopicListNotifier extends StateNotifier<TopicListState> {
       state = state.copyWith(isLoading: false);
     }
   }
+
+  /// 특정 토픽의 통계 조회
+  Future<VoteStat?> fetchVoteStatForPastTopic(int topicId) async {
+    return await TopicApiService.fetchVoteStat(topicId);
+  }
 }
 
 final topicListProvider =

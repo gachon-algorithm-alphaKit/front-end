@@ -145,8 +145,20 @@ class LostFoundService {
   }
 
   static Future<bool> claimItem(int itemId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return true;
+    try {
+      final headers = await _getAuthHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/lost-items/$itemId/claim/'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        return decoded['status'] == 'success';
+      }
+    } catch (e) {
+      print('Error claiming item: $e');
+    }
+    return false;
   }
 
   /// 게시글 삭제

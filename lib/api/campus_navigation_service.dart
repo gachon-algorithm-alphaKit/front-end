@@ -206,44 +206,26 @@ class CampusNavigationService {
       return (path, cost, []);
     }
 
-    final unvisited = List<String>.from(waypoints);
     String current = start;
-    final bestOrder = <String>[];
     final fullPath = <String>[];
     double totalCost = 0.0;
 
-    // 단계 1: Nearest Neighbor — 가장 가까운 미방문 경유지 선택
-    while (unvisited.isNotEmpty) {
-      String? nearestNode;
-      double nearestCost = double.infinity;
-      List<String>? nearestSeg;
-
-      for (final wp in unvisited) {
-        final (seg, cost) = aStar(current, wp, graph, coords);
-        if (seg != null && cost < nearestCost) {
-          nearestNode = wp;
-          nearestCost = cost;
-          nearestSeg = seg;
-        }
-      }
-
-      if (nearestNode == null) return (null, double.infinity, []);
-
-      totalCost += nearestCost;
-      fullPath.addAll(fullPath.isEmpty ? nearestSeg! : nearestSeg!.skip(1));
-      bestOrder.add(nearestNode);
-      current = nearestNode;
-      unvisited.remove(nearestNode);
+    for (final wp in waypoints) {
+      final (seg, cost) = aStar(current, wp, graph, coords);
+      if (seg == null) return (null, double.infinity, []);
+      
+      totalCost += cost;
+      fullPath.addAll(fullPath.isEmpty ? seg : seg.skip(1));
+      current = wp;
     }
 
-    // 단계 2: 마지막 경유지 → 도착지
     final (seg, cost) = aStar(current, end, graph, coords);
     if (seg == null) return (null, double.infinity, []);
-
+    
     totalCost += cost;
     fullPath.addAll(seg.skip(1));
 
-    return (fullPath, totalCost, bestOrder);
+    return (fullPath, totalCost, List.from(waypoints));
   }
 
   // ----------------------------------------------------------

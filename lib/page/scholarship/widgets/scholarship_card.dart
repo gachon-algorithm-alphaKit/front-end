@@ -108,7 +108,7 @@ class ScholarshipCard extends StatelessWidget {
             _condRow(
               Icons.account_balance_outlined,
               '소득분위',
-              '${s.requiredIncomeBracket}분위 이하 (숫자가 클수록 저소득)',
+              '${s.requiredIncomeBracket}분위 이하',
               userIncomeLevel >= s.requiredIncomeBracket ? Colors.green : Colors.red,
               null,
             ),
