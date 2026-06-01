@@ -83,15 +83,19 @@ class RouteInputCard extends StatelessWidget {
 
   Widget _buildingField(TextEditingController ctrl, String hint, IconData icon, Color color) {
     return Autocomplete<String>(
+      key: ObjectKey(ctrl),
+      initialValue: TextEditingValue(text: ctrl.text),
       optionsBuilder: (v) => v.text.isEmpty ? const [] : _buildings.where((b) => b.contains(v.text)),
-      onSelected: (s) => ctrl.text = s,
+      onSelected: (s) {
+        ctrl.text = s;
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
       fieldViewBuilder: (ctx, ctrl2, fn, onSubmit) {
-        ctrl.addListener(() {
-          if (ctrl2.text != ctrl.text) ctrl2.text = ctrl.text;
-        });
         return TextField(
           controller: ctrl2,
           focusNode: fn,
+          onChanged: (val) => ctrl.text = val,
+          onSubmitted: (_) => onSubmit(),
           decoration: InputDecoration(
             labelText: hint,
             prefixIcon: Icon(icon, color: color, size: 20),

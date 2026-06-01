@@ -91,6 +91,11 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
         _result = r;
         _fullPath = fullPath;
       });
+
+      // 만약 네이버 지도 모드 상태에서 다시 검색했다면, 바로 새 경로의 지도를 요청
+      if (_mapMode == MapMode.naver) {
+        _loadNaverMap();
+      }
     } on ArgumentError catch (e) {
       setState(() => _error = e.message.toString());
     } catch (e) {
@@ -125,55 +130,58 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: buildAppBar('캠퍼스 길찾기', Colors.blueAccent),
-      body: _isInitializing
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // ── 입력 카드 ───────────────────────────────────────
-                  RouteInputCard(
-                    departCtrl: _departCtrl,
-                    destCtrl: _destCtrl,
-                    waypointCtrls: _waypointCtrls,
-                    isLoading: _isLoading,
-                    onSearch: _search,
-                    onAddWaypoint: () => setState(() => _waypointCtrls.add(TextEditingController())),
-                    onRemoveWaypoint: (idx) => setState(() {
-                      _waypointCtrls[idx].dispose();
-                      _waypointCtrls.removeAt(idx);
-                    }),
-                  ),
-
-                  if (_error != null) buildErrorBanner(_error!),
-
-                  // ── 결과 ────────────────────────────────────────────
-                  if (_result != null) ...[
-                    const SizedBox(height: 16),
-
-                    // 요약 카드
-                    RouteResultCard(result: _result!),
-
-                    const SizedBox(height: 16),
-
-                    // 지도 시각화 카드
-                    MapVisualizationCard(
-                      mapMode: _mapMode,
-                      result: _result!,
-                      fullPath: _fullPath ?? [],
-                      naverImageBytes: _naverImageBytes,
-                      naverLoading: _naverLoading,
-                      naverError: _naverError,
-                      onRetryNaver: _loadNaverMap,
-                      onSwitchMode: _switchMode,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FA),
+        appBar: buildAppBar('캠퍼스 길찾기', Colors.blueAccent),
+        body: _isInitializing
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // ── 입력 카드 ───────────────────────────────────────
+                    RouteInputCard(
+                      departCtrl: _departCtrl,
+                      destCtrl: _destCtrl,
+                      waypointCtrls: _waypointCtrls,
+                      isLoading: _isLoading,
+                      onSearch: _search,
+                      onAddWaypoint: () => setState(() => _waypointCtrls.add(TextEditingController())),
+                      onRemoveWaypoint: (idx) => setState(() {
+                        _waypointCtrls[idx].dispose();
+                        _waypointCtrls.removeAt(idx);
+                      }),
                     ),
+
+                    if (_error != null) buildErrorBanner(_error!),
+
+                    // ── 결과 ────────────────────────────────────────────
+                    if (_result != null) ...[
+                      const SizedBox(height: 16),
+
+                      // 요약 카드
+                      RouteResultCard(result: _result!),
+
+                      const SizedBox(height: 16),
+
+                      // 지도 시각화 카드
+                      MapVisualizationCard(
+                        mapMode: _mapMode,
+                        result: _result!,
+                        fullPath: _fullPath ?? [],
+                        naverImageBytes: _naverImageBytes,
+                        naverLoading: _naverLoading,
+                        naverError: _naverError,
+                        onRetryNaver: _loadNaverMap,
+                        onSwitchMode: _switchMode,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }

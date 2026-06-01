@@ -8,8 +8,9 @@ class ScholarshipCard extends StatelessWidget {
   final Scholarship scholarship;
   final double userGpa;
   final int userIncomeLevel;
+  final bool userAwardedLastSemester;
 
-  const ScholarshipCard({super.key, required this.scholarship, required this.userGpa, required this.userIncomeLevel});
+  const ScholarshipCard({super.key, required this.scholarship, required this.userGpa, required this.userIncomeLevel, required this.userAwardedLastSemester});
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +113,7 @@ class ScholarshipCard extends StatelessWidget {
               userIncomeLevel >= s.requiredIncomeBracket ? Colors.green : Colors.red,
               null,
             ),
-          _condRow(Icons.autorenew_outlined, '중복수혜', s.duplicateAllowed ? '가능 (직전학기 수혜 무관)' : '불가 (직전학기 수혜자 불가)', s.duplicateAllowed ? Colors.green : Colors.red, null),
+          _condRow(Icons.autorenew_outlined, '중복수혜', s.duplicateAllowed ? '가능 (직전학기 수혜 무관)' : '불가 (직전학기 수혜자 불가)', s.duplicateAllowed ? Colors.green : (userAwardedLastSemester ? Colors.red : Colors.green), null),
           _condRow(Icons.event_outlined, '마감일', s.deadline ?? '미정', days >= 0 ? Colors.black87 : Colors.grey, null),
           if (s.detail != null) ...[const SizedBox(height: 8), Text(s.detail!, style: TextStyle(fontSize: 12, color: Colors.grey.shade700, height: 1.5))],
           const SizedBox(height: 12),

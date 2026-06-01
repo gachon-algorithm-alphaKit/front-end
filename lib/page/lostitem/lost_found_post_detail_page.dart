@@ -326,6 +326,7 @@ class _LostFoundPostDetailPageState extends ConsumerState<LostFoundPostDetailPag
                     tooltip: '수령 완료 (주인 찾음)',
                     onPressed: () async {
                       final success = await LostFoundService.claimItem(_post.itemId);
+                      if (!mounted) return;
                       if (success) {
                         setState(() {
                           _post = _post.copyWith(status: true);
@@ -437,7 +438,7 @@ class _LostFoundPostDetailPageState extends ConsumerState<LostFoundPostDetailPag
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
-                        '${LostFoundService.baseUrl}${_post.imagePath}',
+                        _post.imagePath!.startsWith('http') ? _post.imagePath! : '${LostFoundService.baseUrl}${_post.imagePath}',
                         width: double.infinity,
                         height: 220,
                         fit: BoxFit.cover,

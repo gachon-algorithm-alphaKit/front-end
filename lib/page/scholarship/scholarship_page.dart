@@ -237,6 +237,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
                         scholarship: _filtered[i],
                         userGpa: _gpa,
                         userIncomeLevel: _incomeLevel,
+                        userAwardedLastSemester: _awardedLastSemester,
                       );
                     },
                   ),

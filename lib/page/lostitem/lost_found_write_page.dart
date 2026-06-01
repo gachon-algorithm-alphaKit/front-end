@@ -21,7 +21,8 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
   late final TextEditingController _locationCtrl;
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
-  XFile? _imageFile;
+  XFile? _newImageFile;
+  String? _existingImageUrl;
   bool _isSubmitting = false;
   bool _isAnonymous = false;
   bool _status = false; // false = 보관중, true = 주인 찾음
@@ -37,7 +38,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
     _locationCtrl = TextEditingController(text: p?.location ?? '');
     _isAnonymous = p?.isAnonymous ?? false;
     _status = p?.status ?? false;
-    if (p?.imagePath != null) _imageFile = XFile(p!.imagePath!);
+    if (p?.imagePath != null) _existingImageUrl = p!.imagePath;
   }
 
   @override
@@ -50,7 +51,12 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picked = await _picker.pickImage(source: source, imageQuality: 85);
-    if (picked != null) setState(() => _imageFile = picked);
+    if (picked != null) {
+      setState(() {
+        _newImageFile = picked;
+        _existingImageUrl = null;
+      });
+    }
   }
 
   void _showImagePicker() {
@@ -96,7 +102,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                 _pickImage(ImageSource.camera);
               },
             ),
-            if (_imageFile != null)
+            if (_newImageFile != null || _existingImageUrl != null)
               ListTile(
                 leading: Container(
                   width: 44,
@@ -110,7 +116,10 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  setState(() => _imageFile = null);
+                  setState(() {
+                    _newImageFile = null;
+                    _existingImageUrl = null;
+                  });
                 },
               ),
             const SizedBox(height: 12),
@@ -133,7 +142,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
           category: _locationCtrl.text.trim(),
           description: _descriptionCtrl.text.trim(),
           status: _status,
-          imagePath: _imageFile?.path,
+          imagePath: _newImageFile?.path,
         );
 
         if (updatedPost != null) {
@@ -145,9 +154,9 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
             description: _descriptionCtrl.text.trim(),
             location: _locationCtrl.text.trim(),
             isAnonymous: _isAnonymous,
-            imagePath: _imageFile?.path,
+            imagePath: _newImageFile?.path ?? _existingImageUrl,
             status: _status,
-            clearImage: _imageFile == null,
+            clearImage: _newImageFile == null && _existingImageUrl == null,
           );
           widget.onSubmit(post);
         }
@@ -158,7 +167,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
           isAnonymous: _isAnonymous,
           category: _locationCtrl.text.trim(),
           description: _descriptionCtrl.text.trim(),
-          imagePath: _imageFile?.path,
+          imagePath: _newImageFile?.path,
         );
 
         if (newPost != null) {
@@ -173,7 +182,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
             category: _locationCtrl.text.trim(),
             description: _descriptionCtrl.text.trim(),
             isAnonymous: _isAnonymous,
-            imgFilePath: _imageFile?.path ?? '',
+            imgFilePath: _newImageFile?.path ?? '',
             createTime: () {
               final now = DateTime.now();
               return "${now.year}-${now.month.toString().padLeft(2, "0")}-${now.day.toString().padLeft(2, "0")}";
@@ -279,17 +288,17 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             width: double.infinity,
-                            height: _imageFile == null ? 100 : 220,
+                            height: (_newImageFile == null && _existingImageUrl == null) ? 100 : 220,
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: _imageFile != null ? Colors.redAccent : Colors.grey.shade300,
-                                width: _imageFile != null ? 1.5 : 1,
-                                style: _imageFile == null ? BorderStyle.solid : BorderStyle.solid,
+                                color: (_newImageFile != null || _existingImageUrl != null) ? Colors.redAccent : Colors.grey.shade300,
+                                width: (_newImageFile != null || _existingImageUrl != null) ? 1.5 : 1,
+                                style: BorderStyle.solid,
                               ),
                             ),
-                            child: _imageFile == null
+                            child: (_newImageFile == null && _existingImageUrl == null)
                                 ? Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -303,13 +312,18 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                                     children: [
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(11),
-                                        child: Image.file(File(_imageFile!.path), fit: BoxFit.cover),
+                                        child: _newImageFile != null
+                                            ? Image.file(File(_newImageFile!.path), fit: BoxFit.cover)
+                                            : Image.network(_existingImageUrl!.startsWith('http') ? _existingImageUrl! : '${LostFoundService.baseUrl}$_existingImageUrl', fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined)),
                                       ),
                                       Positioned(
                                         top: 8,
                                         right: 8,
                                         child: GestureDetector(
-                                          onTap: () => setState(() => _imageFile = null),
+                                          onTap: () => setState(() {
+                                            _newImageFile = null;
+                                            _existingImageUrl = null;
+                                          }),
                                           child: Container(
                                             padding: const EdgeInsets.all(4),
                                             decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),

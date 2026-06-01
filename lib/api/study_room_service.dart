@@ -122,12 +122,19 @@ class StudyRoomService {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         if (decoded['status'] == 'success') {
           return List<String>.from(decoded['data']['reservation_ids'].map((x) => x.toString()));
+        } else if (decoded['message'] != null) {
+          throw Exception(decoded['message']);
         }
       } else {
-        print('Error combo reserving: ${response.statusCode}');
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['message'] != null) {
+          throw Exception(decoded['message']);
+        }
       }
     } catch (e) {
+      if (e is Exception) rethrow;
       print('Error combo reserving: $e');
+      throw Exception('예약 처리에 실패했습니다.');
     }
     return null;
   }
@@ -165,10 +172,19 @@ class StudyRoomService {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         if (decoded['status'] == 'success') {
           return decoded['data']['reservation_id'].toString();
+        } else if (decoded['message'] != null) {
+          throw Exception(decoded['message']);
+        }
+      } else {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded['message'] != null) {
+          throw Exception(decoded['message']);
         }
       }
     } catch (e) {
+      if (e is Exception) rethrow;
       print('Error reserving room: $e');
+      throw Exception('예약 처리에 실패했습니다.');
     }
     return null;
   }

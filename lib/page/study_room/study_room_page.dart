@@ -51,15 +51,11 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
 
   Future<void> _search() async {
     if (_startHour >= _endHour) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('종료 시간은 시작 시간보다 이후여야 합니다.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('종료 시간은 시작 시간보다 이후여야 합니다.')));
       return;
     }
     if (_endHour - _startHour > 4) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('최대 이용 시간은 4시간입니다.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('최대 이용 시간은 4시간입니다.')));
       return;
     }
     setState(() {
@@ -69,14 +65,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
       _results = [];
     });
     try {
-      final r = await StudyRoomService.recommend(
-        _date,
-        _startHour,
-        _endHour,
-        _capacity,
-        _selectedFacilities,
-        page: _page,
-      );
+      final r = await StudyRoomService.recommend(_date, _startHour, _endHour, _capacity, _selectedFacilities, page: _page);
       setState(() {
         _results = r['list'] as List<RoomRecommendation>;
         _hasMore = r['hasMore'] as bool;
@@ -90,14 +79,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
     setState(() => _isFetchingMore = true);
     try {
       _page++;
-      final r = await StudyRoomService.recommend(
-        _date,
-        _startHour,
-        _endHour,
-        _capacity,
-        _selectedFacilities,
-        page: _page,
-      );
+      final r = await StudyRoomService.recommend(_date, _startHour, _endHour, _capacity, _selectedFacilities, page: _page);
       setState(() {
         _results.addAll(r['list'] as List<RoomRecommendation>);
         _hasMore = r['hasMore'] as bool;
@@ -108,69 +90,119 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
   }
 
   Future<void> _reserve(RoomRecommendation rec) async {
-    final reservationId = await StudyRoomService.reserve(
-      rec.room.roomId,
-      _date,
-      _startHour,
-      _endHour,
-      _capacity,
-    );
-    if (reservationId != null && mounted) {
-      // 예약 내역 저장
-      ref.read(reservationProvider.notifier).addReservation(
-        StudyRoomReservation(
-          id: reservationId,
-          roomName: rec.room.name,
-          location: StudyRoomService.locationFor(rec.room),
-          date:
-              "${_date.year}.${_date.month.toString().padLeft(2, "0")}.${_date.day.toString().padLeft(2, "0")}",
-          startHour: _startHour,
-          endHour: _endHour,
-        ),
-      );
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${rec.room.name} 예약이 완료되었습니다.'),
-          backgroundColor: Colors.green.shade600,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      rec.isAvailable = false;
-      rec.isMyReservation = true;
-      for (int i = _startHour; i < _endHour; i++) {
-        if (i >= 8 && i < 22) {
-          if (rec.bookedSlots.length > i - 8) {
-            rec.bookedSlots[i - 8] = true;
+    if (!rec.isAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('이미 예약된 시간대입니다.'), backgroundColor: Colors.orange.shade600, behavior: SnackBarBehavior.floating));
+      return;
+    }
+    if (_endHour - _startHour > 4) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('최대 이용 시간은 4시간입니다.')));
+      return;
+    }
+    if (_endHour - _startHour < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('최소 이용 시간은 1시간입니다.')));
+      return;
+    }
+    if (rec.isMyReservation) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('이미 예약된 시간대입니다.'), backgroundColor: Colors.orange.shade600, behavior: SnackBarBehavior.floating));
+      return;
+    }
+    try {
+      final reservationId = await StudyRoomService.reserve(rec.room.roomId, _date, _startHour, _endHour, _capacity);
+      if (reservationId != null && mounted) {
+        // 예약 내역 저장
+        ref
+            .read(reservationProvider.notifier)
+            .addReservation(
+              StudyRoomReservation(
+                id: reservationId,
+                roomName: rec.room.name,
+                location: StudyRoomService.locationFor(rec.room),
+                date: "${_date.year}.${_date.month.toString().padLeft(2, "0")}.${_date.day.toString().padLeft(2, "0")}",
+                startHour: _startHour,
+                endHour: _endHour,
+              ),
+            );
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${rec.room.name} 예약이 완료되었습니다.'), backgroundColor: Colors.green.shade600, behavior: SnackBarBehavior.floating));
+        rec.isAvailable = false;
+        rec.isMyReservation = true;
+        for (int i = _startHour; i < _endHour; i++) {
+          if (i >= 8 && i < 22) {
+            if (rec.bookedSlots.length > i - 8) {
+              rec.bookedSlots[i - 8] = true;
+            }
           }
         }
+        setState(() {});
       }
-      setState(() {});
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('예약 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'),
-          backgroundColor: Colors.red.shade600,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    } catch (e) {
+      if (mounted) {
+        String msg = e.toString();
+        if (msg.startsWith('Exception: ')) {
+          msg = msg.substring(11);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red.shade600, behavior: SnackBarBehavior.floating));
+      }
+    }
+  }
+
+  Future<void> _reserveCombo(RoomRecommendation rec) async {
+    if (!rec.isAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('이미 예약된 시간대입니다.'), backgroundColor: Colors.orange.shade600, behavior: SnackBarBehavior.floating));
+      return;
+    }
+    try {
+      final reservationIds = await StudyRoomService.reserveCombo(rec.comboSlots, _capacity);
+      if (reservationIds != null && reservationIds.isNotEmpty && mounted) {
+        // 예약 내역 저장 (연속 예약)
+        for (int i = 0; i < reservationIds.length; i++) {
+          final slot = rec.comboSlots[i];
+          ref.read(reservationProvider.notifier).addReservation(
+            StudyRoomReservation(
+              id: reservationIds[i],
+              roomName: slot['name'],
+              location: slot['place_name'],
+              date: "${_date.year}.${_date.month.toString().padLeft(2, "0")}.${_date.day.toString().padLeft(2, "0")}",
+              startHour: slot['start_hour'],
+              endHour: slot['end_hour'],
+            ),
+          );
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('공실 조합 일괄 예약이 완료되었습니다.'),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        rec.isAvailable = false;
+        rec.isMyReservation = true;
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        String msg = e.toString();
+        if (msg.startsWith('Exception: ')) {
+          msg = msg.substring(11);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red.shade600, behavior: SnackBarBehavior.floating));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final myReservations = ref.watch(reservationProvider);
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text(
           '스터디룸 예약',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
         ),
         backgroundColor: Colors.green.shade600,
         centerTitle: true,
@@ -181,23 +213,15 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
             icon: const Icon(Icons.event_note, color: Colors.white),
             label: Text(
               '예약 내역(${myReservations.length})',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const StudyRoomReservationHistoryPage(),
-              ),
-            ),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudyRoomReservationHistoryPage())),
           ),
         ],
       ),
       body: SingleChildScrollView(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // 조건 설정 카드
@@ -205,89 +229,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 날짜
-                  buildSectionLabel('날짜'),
-                  GestureDetector(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _date,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 30)),
-                      );
-                      if (picked != null) setState(() => _date = picked);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_outlined,
-                            color: Colors.green.shade600,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            "${_date.year}.${_date.month.toString().padLeft(2, "0")}.${_date.day.toString().padLeft(2, "0")}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.chevron_right,
-                            color: Colors.grey.shade400,
-                            size: 18,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // 시간
-                  buildSectionLabel('이용 시간'),
-                  Row(
-                    children: [
-                      _hourSelector(
-                        '시작',
-                        _startHour,
-                        (v) => setState(() {
-                          _startHour = v;
-                          if (_endHour <= _startHour) _endHour = _startHour + 1;
-                          if (_endHour - _startHour > 4) _endHour = _startHour + 4;
-                        }),
-                        8,
-                        20,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          '~',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ),
-                      _hourSelector(
-                        '종료',
-                  const Text(
-                    '예약 조건',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  const Text('예약 조건', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
                   Row(
                     children: [
@@ -296,12 +238,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                       Expanded(
                         child: InkWell(
                           onTap: () async {
-                            final d = await showDatePicker(
-                              context: context,
-                              initialDate: _date,
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(const Duration(days: 30)),
-                            );
+                            final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 30)));
                             if (d != null) setState(() => _date = d);
                           },
                           child: Container(
@@ -311,10 +248,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: Colors.grey.shade200),
                             ),
-                            child: Text(
-                              '${_date.year}년 ${_date.month}월 ${_date.day}일',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                            ),
+                            child: Text('${_date.year}년 ${_date.month}월 ${_date.day}일', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
                           ),
                         ),
                       ),
@@ -329,9 +263,29 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _hourSelector('시작', _startHour, (v) => setState(() => _startHour = v), 8, 21),
+                            _hourSelector(
+                              '시작',
+                              _startHour,
+                              (v) => setState(() {
+                                _startHour = v;
+                                if (_endHour <= _startHour) _endHour = _startHour + 1;
+                                if (_endHour - _startHour > 4) _endHour = _startHour + 4;
+                              }),
+                              8,
+                              21,
+                            ),
                             Text('~', style: TextStyle(fontSize: 18, color: Colors.grey.shade400)),
-                            _hourSelector('종료', _endHour, (v) => setState(() => _endHour = v), 9, 22),
+                            _hourSelector(
+                              '종료',
+                              _endHour,
+                              (v) => setState(() {
+                                _endHour = v;
+                                if (_startHour >= _endHour) _startHour = _endHour - 1;
+                                if (_endHour - _startHour > 4) _startHour = _endHour - 4;
+                              }),
+                              9,
+                              22,
+                            ),
                           ],
                         ),
                       ),
@@ -352,17 +306,13 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                                 IconButton(
                                   icon: const Icon(Icons.remove_circle_outline),
                                   color: Colors.green.shade600,
-                                  onPressed: _capacity > 1
-                                      ? () => setState(() => _capacity--)
-                                      : null,
+                                  onPressed: _capacity > 1 ? () => setState(() => _capacity--) : null,
                                 ),
                                 Text('$_capacity명', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 IconButton(
                                   icon: const Icon(Icons.add_circle_outline),
                                   color: Colors.green.shade600,
-                                  onPressed: _capacity < 20
-                                      ? () => setState(() => _capacity++)
-                                      : null,
+                                  onPressed: _capacity < 20 ? () => setState(() => _capacity++) : null,
                                 ),
                               ],
                             ),
@@ -410,11 +360,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : const Text('빈 방 찾기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -430,52 +376,28 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                     children: [
                       Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
                       const SizedBox(height: 16),
-                      Text(
-                        '조건에 맞는 스터디룸이 없습니다.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                      ),
+                      Text('조건에 맞는 스터디룸이 없습니다.', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
                     ],
                   ),
                 )
               else ...[
                 Row(
                   children: [
-                    const Text(
-                      '추천 결과',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('추천 결과', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(12)),
                       child: Text(
                         '${_results.length}개',
-                        style: TextStyle(
-                          color: Colors.green.shade800,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(color: Colors.green.shade800, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 ..._results.asMap().entries.map(
-                  (e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: e.value.isSplitBooking
-                        ? _comboRoomCard(e.value)
-                        : _roomCard(e.value, e.key == 0),
-                  ),
+                  (e) => Padding(padding: const EdgeInsets.only(bottom: 10), child: e.value.isSplitBooking ? _comboRoomCard(e.value) : _roomCard(e.value, e.key == 0)),
                 ),
                 if (_isFetchingMore)
                   const Padding(
@@ -490,13 +412,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
     );
   }
 
-  Widget _hourSelector(
-    String label,
-    int value,
-    ValueChanged<int> onChanged,
-    int min,
-    int max,
-  ) => Column(
+  Widget _hourSelector(String label, int value, ValueChanged<int> onChanged, int min, int max) => Column(
     children: [
       Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
       const SizedBox(height: 4),
@@ -504,24 +420,15 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
         children: [
           GestureDetector(
             onTap: value > min ? () => onChanged(value - 1) : null,
-            child: Icon(
-              Icons.chevron_left,
-              color: value > min ? Colors.green.shade600 : Colors.grey.shade300,
-            ),
+            child: Icon(Icons.chevron_left, color: value > min ? Colors.green.shade600 : Colors.grey.shade300),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              '$value:00',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
+            child: Text('$value:00', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ),
           GestureDetector(
             onTap: value < max ? () => onChanged(value + 1) : null,
-            child: Icon(
-              Icons.chevron_right,
-              color: value < max ? Colors.green.shade600 : Colors.grey.shade300,
-            ),
+            child: Icon(Icons.chevron_right, color: value < max ? Colors.green.shade600 : Colors.grey.shade300),
           ),
         ],
       ),
@@ -547,19 +454,12 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                 const SizedBox(width: 8),
                 Text(
                   '공실 조합 추천 (${rec.comboSlots.length}시간 연속)',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Colors.amber.shade900,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.amber.shade900),
                 ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: rec.isAvailable ? () => _reserve(rec) : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: rec.isAvailable ? Colors.amber.shade700 : Colors.grey.shade400,
-                    minimumSize: const Size(60, 36),
-                  ),
+                  onPressed: rec.isAvailable ? () => _reserveCombo(rec) : null,
+                  style: FilledButton.styleFrom(backgroundColor: rec.isAvailable ? Colors.amber.shade700 : Colors.grey.shade400, minimumSize: const Size(60, 36)),
                   child: Text(rec.isAvailable ? '일괄 예약' : '마감', style: const TextStyle(fontSize: 13)),
                 ),
               ],
@@ -574,23 +474,20 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade100,
-                        borderRadius: BorderRadius.circular(6),
+                      decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(6)),
+                      child: Text(
+                        '${slot['start_hour']}:00 ~ ${slot['end_hour']}:00',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
                       ),
-                      child: Text('${slot['start_hour']}:00 ~ ${slot['end_hour']}:00', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        '${slot['name']} (${slot['place_name']})',
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
+                      child: Text('${slot['name']} (${slot['place_name']})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     ),
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -602,10 +499,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
     color: Colors.white,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(14),
-      side: BorderSide(
-        color: isTop ? Colors.green.shade300 : Colors.grey.shade200,
-        width: isTop ? 1.5 : 1,
-      ),
+      side: BorderSide(color: isTop ? Colors.green.shade300 : Colors.grey.shade200, width: isTop ? 1.5 : 1),
     ),
     child: Padding(
       padding: const EdgeInsets.all(16),
@@ -614,18 +508,11 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12)),
             alignment: Alignment.center,
             child: Text(
               '${rec.score.round()}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.green.shade700,
-                fontSize: 15,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade700, fontSize: 15),
             ),
           ),
           const SizedBox(width: 14),
@@ -635,62 +522,33 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      rec.room.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
+                    Text(rec.room.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     if (isTop) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade600,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.green.shade600, borderRadius: BorderRadius.circular(4)),
                         child: const Text(
                           '추천 1위',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                     if (rec.isMyReservation) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade600,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.blue.shade600, borderRadius: BorderRadius.circular(4)),
                         child: const Text(
                           '내가 예약함',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '${StudyRoomService.locationFor(rec.room)} · ${rec.room.capacity}인실',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
+                Text('${StudyRoomService.locationFor(rec.room)} · ${rec.room.capacity}인실', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 4,
@@ -699,8 +557,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                         (f) => Chip(
                           label: Text(f, style: const TextStyle(fontSize: 10)),
                           padding: EdgeInsets.zero,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           backgroundColor: Colors.grey.shade100,
                         ),
                       )
@@ -714,10 +571,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                       child: Container(
                         height: 4,
                         margin: EdgeInsets.only(right: i < 13 ? 2.0 : 0.0),
-                        decoration: BoxDecoration(
-                          color: isBooked ? Colors.grey.shade400 : Colors.green.shade500,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                        decoration: BoxDecoration(color: isBooked ? Colors.grey.shade400 : Colors.green.shade500, borderRadius: BorderRadius.circular(2)),
                       ),
                     );
                   }),
@@ -740,14 +594,9 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
               backgroundColor: rec.isAvailable ? Colors.green.shade600 : Colors.grey.shade400,
               disabledBackgroundColor: Colors.grey.shade300,
               minimumSize: const Size(60, 36),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(
-              rec.isAvailable ? '예약' : '마감',
-              style: const TextStyle(fontSize: 13),
-            ),
+            child: Text(rec.isAvailable ? '예약' : '마감', style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),

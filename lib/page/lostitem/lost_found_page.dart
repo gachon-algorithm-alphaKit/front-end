@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -82,12 +83,7 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
     setState(() => _isFetchingMore = true);
 
     _page++;
-    final r = await LostFoundService.search(
-      _ctrl.text.trim(), 
-      _isFuzzy, 
-      page: _page, 
-      limit: _limit
-    );
+    final r = await LostFoundService.search(_ctrl.text.trim(), _isFuzzy, page: _page, limit: _limit);
 
     setState(() {
       if (r.isEmpty || r.length < _limit) {
@@ -103,17 +99,13 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
     // 진입하자마자 내 신고 내역 조회를 트리거하여 Count를 가져오도록 함
     ref.watch(myLostItemsProvider);
     final myPostsCount = ref.watch(myLostItemsCountProvider);
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text(
           '분실물 통합 센터',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
         ),
         backgroundColor: Colors.redAccent,
         centerTitle: true,
@@ -124,17 +116,9 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
             icon: const Icon(Icons.history_rounded, color: Colors.white),
             label: Text(
               '신고 내역($myPostsCount)',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const LostFoundHistoryPage(),
-              ),
-            ),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LostFoundHistoryPage())).then((_) => _search()),
           ),
         ],
       ),
@@ -147,6 +131,7 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
               builder: (_) => LostFoundWritePage(
                 onSubmit: (post) {
                   ref.read(myLostItemsProvider.notifier).addPostOptimistic(post);
+                  _search();
                 },
               ),
             ),
@@ -185,15 +170,9 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.redAccent,
-                                  width: 1.5,
-                                ),
+                                borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               suffixIcon: _ctrl.text.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(Icons.clear),
@@ -224,9 +203,7 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                         minimumSize: const Size(52, 52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: const Icon(Icons.search),
                     ),
@@ -239,24 +216,16 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
           // 결과
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Colors.redAccent),
-                  )
+                ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
                 : _results.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 64,
-                          color: Colors.grey.shade300,
-                        ),
+                        Icon(Icons.search_off, size: 64, color: Colors.grey.shade300),
                         const SizedBox(height: 12),
                         Text(
-                          _ctrl.text.isEmpty
-                              ? '검색 결과가 없습니다'
-                              : "'${_ctrl.text}'에 대한 검색 결과가 없습니다\n단어 철자가 정확한지 확인해보세요",
+                          _ctrl.text.isEmpty ? '검색 결과가 없습니다' : "'${_ctrl.text}'에 대한 검색 결과가 없습니다\n단어 철자가 정확한지 확인해보세요",
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey.shade500, height: 1.5),
                         ),
@@ -301,13 +270,16 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                     final idx = _results.indexWhere((e) => e.itemId == updated.itemId);
                     if (idx != -1) _results[idx] = updated;
                   });
+                  ref.read(myLostItemsProvider.notifier).updatePostOptimistic(updated);
                 }
               },
               onDelete: (id) {
                 if (mounted) {
+                  ref.read(myLostItemsProvider.notifier).removePostOptimistic(id);
                   setState(() {
                     _results.removeWhere((e) => e.id == id);
                   });
+                  Navigator.pop(context);
                 }
               },
             ),
@@ -321,133 +293,57 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: Colors.grey.shade200),
         ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.itemName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(item.itemName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: isAvailable ? Colors.blue.shade50 : Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
+                    child: Text(
+                      item.statusText,
+                      style: TextStyle(fontSize: 11, color: isAvailable ? Colors.blue.shade700 : Colors.grey.shade600, fontWeight: FontWeight.bold),
                     ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isAvailable
-                        ? Colors.blue.shade50
-                        : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    item.statusText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isAvailable
-                          ? Colors.blue.shade700
-                          : Colors.grey.shade600,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(item.description, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+              if (item.imagePath != null) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    item.imagePath!.startsWith('http') ? item.imagePath! : '${LostFoundService.baseUrl}${item.imagePath}',
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              item.description,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-            ),
-            if (item.imagePath != null) ...[
               const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  '${LostFoundService.baseUrl}${item.imagePath}',
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const SizedBox.shrink(),
-                ),
+              Row(
+                children: [
+                  Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade500),
+                  const SizedBox(width: 4),
+                  Text(item.location, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  const SizedBox(width: 12),
+                  Icon(Icons.access_time, size: 14, color: Colors.grey.shade500),
+                  const SizedBox(width: 4),
+                  Text(item.foundDate, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  const Spacer(),
+                ],
               ),
             ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 14,
-                  color: Colors.grey.shade500,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  item.location,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                const SizedBox(width: 12),
-                Icon(Icons.access_time, size: 14, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Text(
-                  item.foundDate,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                const Spacer(),
-                if (isAvailable)
-                  TextButton(
-                    onPressed: () async {
-                      final success = await LostFoundService.claimItem(item.itemId);
-                      if (!mounted) {
-                        return;
-                      }
-                      if (success) {
-                        setState(() {
-                          final idx = _results.indexWhere((e) => e.itemId == item.itemId);
-                          if (idx != -1) {
-                            _results[idx] = _results[idx].copyWith(status: true);
-                          }
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${item.itemName} 수령 신청이 완료되었습니다.'),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('수령 신청에 실패했습니다.'),
-                          ),
-                        );
-                      }
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.redAccent,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                    ),
-                    child: const Text(
-                      '수령 신청',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
