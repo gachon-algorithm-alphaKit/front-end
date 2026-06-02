@@ -99,33 +99,33 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 웰컴 배너 (정적)
-          Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.indigo,
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 웰컴 배너 (정적)
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.indigo,
+                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '안녕하세요, ${_profile.name}님! 👋',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text('성공적인 대학 생활을 위한 핵심 서비스를 이용해 보세요.', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                ],
+              ),
             ),
-            padding: const EdgeInsets.fromLTRB(24, 10, 24, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '안녕하세요, ${_profile.name}님! 👋',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                const SizedBox(height: 6),
-                const Text('성공적인 대학 생활을 위한 핵심 서비스를 이용해 보세요.', style: TextStyle(fontSize: 13, color: Colors.white70)),
-              ],
-            ),
-          ),
 
-          // 서비스 카드
-          Expanded(
-            child: Padding(
+            // 서비스 카드
+            Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,43 +135,28 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
                   const SizedBox(height: 16),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(child: _serviceCard(0)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _serviceCard(1)),
-                      ],
+                  GridView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.15,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(child: _serviceCard(2)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _serviceCard(3)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(child: _serviceCard(4)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _serviceCard(5)),
-                      ],
-                    ),
+                    itemCount: 6,
+                    itemBuilder: (context, index) => _serviceCard(index),
                   ),
                 ],
               ),
             ),
-          ),
-          // 오늘의 토픽 밸런스 게임 배너 추가
-          const TopicBannerWidget(),
-          SizedBox(height: bottom + 10),
-        ],
+            const SizedBox(height: 20),
+            // 오늘의 토픽 밸런스 게임 배너 추가
+            const TopicBannerWidget(),
+            SizedBox(height: bottom + 20),
+          ],
+        ),
       ),
     );
   }
