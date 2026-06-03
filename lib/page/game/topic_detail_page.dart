@@ -68,6 +68,17 @@ class _TopicDetailPageState extends ConsumerState<TopicDetailPage>
     final activeState = ref.read(activeTopicProvider);
     final currentTopic = _topic.isActive ? (activeState.topic ?? _topic) : _topic;
 
+    if (!currentTopic.isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('이전 밸런스 게임에는 참여하실 수 없습니다.'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return;
+    }
+
     // 이미 같은 의견에 투표한 경우 무시
     if (currentTopic.myVote == opinion) return;
 

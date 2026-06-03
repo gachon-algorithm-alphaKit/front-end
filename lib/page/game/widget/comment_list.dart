@@ -48,6 +48,20 @@ class _CommentListState extends ConsumerState<CommentList> {
     }
   }
 
+  bool _checkActiveAndWarn() {
+    if (!widget.isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('이전 밸런스 게임에는 참여하실 수 없습니다.'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(topicCommentProvider(_providerKey));
@@ -110,18 +124,24 @@ class _CommentListState extends ConsumerState<CommentList> {
                             CommentCard(
                               comment: comment,
                               isActive: widget.isActive,
-                              onLike: () => ref
-                                  .read(topicCommentProvider(_providerKey)
-                                      .notifier)
-                                  .toggleLike(comment.commentId),
-                              onEdit: (newText) => ref
-                                  .read(topicCommentProvider(_providerKey)
-                                      .notifier)
-                                  .editComment(comment.commentId, newText),
-                              onDelete: () => ref
-                                  .read(topicCommentProvider(_providerKey)
-                                      .notifier)
-                                  .removeComment(comment.commentId),
+                              onLike: () {
+                                if (!_checkActiveAndWarn()) return;
+                                ref
+                                    .read(topicCommentProvider(_providerKey).notifier)
+                                    .toggleLike(comment.commentId);
+                              },
+                              onEdit: (newText) {
+                                if (!_checkActiveAndWarn()) return;
+                                ref
+                                    .read(topicCommentProvider(_providerKey).notifier)
+                                    .editComment(comment.commentId, newText);
+                              },
+                              onDelete: () {
+                                if (!_checkActiveAndWarn()) return;
+                                ref
+                                    .read(topicCommentProvider(_providerKey).notifier)
+                                    .removeComment(comment.commentId);
+                              },
                             ),
                             if (index < state.comments.length - 1)
                               Divider(
@@ -282,11 +302,11 @@ class _CommentListState extends ConsumerState<CommentList> {
 
     if (success) {
       _textController.clear();
-      // 스크롤을 맨 아래로
-      Future.delayed(const Duration(milliseconds: 200), () {
+      // 스크롤을 맨 위로 (새 댓글이 상단에 추가되므로)
+      Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
+            0.0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
