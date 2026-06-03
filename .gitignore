@@ -43,3 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Logs configuration
+log/*
+!log/ui_error.log
+!log/error/
+!log/warn/
+!log/info/
+log/error/*
+log/warn/*
+log/info/*
+!log/error/.gitkeep
+!log/warn/.gitkeep
+!log/info/.gitkeep

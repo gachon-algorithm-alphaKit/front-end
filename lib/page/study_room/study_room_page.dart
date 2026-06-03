@@ -520,11 +520,13 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(rec.room.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    if (isTop) ...[
-                      const SizedBox(width: 6),
+                    if (isTop)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(color: Colors.green.shade600, borderRadius: BorderRadius.circular(4)),
@@ -533,9 +535,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                           style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ],
-                    if (rec.isMyReservation) ...[
-                      const SizedBox(width: 6),
+                    if (rec.isMyReservation)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(color: Colors.blue.shade600, borderRadius: BorderRadius.circular(4)),
@@ -544,7 +544,6 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                           style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 4),
