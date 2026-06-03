@@ -61,24 +61,33 @@ class _StudyRoomReservationHistoryPageState
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 12, color: Colors.red.shade400),
-                      const SizedBox(width: 4),
-                      Text(
-                        res.date,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade700),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined,
+                              size: 12, color: Colors.red.shade400),
+                          const SizedBox(width: 4),
+                          Text(
+                            res.date,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade700),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.access_time_rounded,
-                          size: 12, color: Colors.red.shade400),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${res.startHour}:00 ~ ${res.endHour}:00',
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade700),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time_rounded,
+                              size: 12, color: Colors.red.shade400),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${res.startHour}:00 ~ ${res.endHour}:00',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade700),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -156,7 +165,7 @@ class _StudyRoomReservationHistoryPageState
 
   @override
   Widget build(BuildContext context) {
-    final _reservations = ref.watch(reservationProvider);
+    final reservations = ref.watch(reservationProvider);
     
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -172,7 +181,7 @@ class _StudyRoomReservationHistoryPageState
                 fontSize: 18,
               ),
             ),
-            if (_reservations.isNotEmpty) ...[
+            if (reservations.isNotEmpty) ...[
               const SizedBox(width: 8),
               Container(
                 padding:
@@ -182,7 +191,7 @@ class _StudyRoomReservationHistoryPageState
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${_reservations.length}건',
+                  '${reservations.length}건',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -198,7 +207,7 @@ class _StudyRoomReservationHistoryPageState
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _reservations.isEmpty
+      body: reservations.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -225,11 +234,11 @@ class _StudyRoomReservationHistoryPageState
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: _reservations.length,
+              itemCount: reservations.length,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final res =
-                    _reservations[_reservations.length - 1 - i]; // 최신순
+                    reservations[reservations.length - 1 - i]; // 최신순
                 return Card(
                   elevation: 0,
                   color: Colors.white,
@@ -280,34 +289,43 @@ class _StudyRoomReservationHistoryPageState
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 13,
-                                    color: Colors.green.shade500,
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today_outlined,
+                                        size: 13,
+                                        color: Colors.green.shade500,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        res.date,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    res.date,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Icon(
-                                    Icons.access_time_rounded,
-                                    size: 13,
-                                    color: Colors.green.shade500,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${res.startHour}:00 ~ ${res.endHour}:00',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade700,
-                                    ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time_rounded,
+                                        size: 13,
+                                        color: Colors.green.shade500,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${res.startHour}:00 ~ ${res.endHour}:00',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

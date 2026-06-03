@@ -6,7 +6,10 @@ class WidgetBidirectionalScroll extends StatelessWidget {
   const WidgetBidirectionalScroll({super.key, required this.child});
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(scrollDirection: Axis.horizontal, child: child);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: child,
+    );
   }
 }
 
@@ -41,24 +44,25 @@ class ScholarshipInfoCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 4))],
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 내 정보 행
-          Row(
-            children: [
-              const Text('내 정보', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: Colors.teal.shade50, borderRadius: BorderRadius.circular(4)),
-                child: Text('직접 입력 (향후 학생 DB 자동 연동)', style: TextStyle(fontSize: 9, color: Colors.teal.shade700)),
-              ),
-            ],
+          const Text(
+            '내 정보',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 12),
           Row(
@@ -68,17 +72,33 @@ class ScholarshipInfoCard extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _infoChip('학점', '${(gpa * 10).floor() / 10}점', Colors.teal),
+                      _infoChip(
+                        '학점',
+                        '${(gpa * 10).floor() / 10}점',
+                        Colors.teal,
+                      ),
                       const SizedBox(width: 8),
                       _infoChip('학년', '$grade학년', Colors.indigo),
                       const SizedBox(width: 8),
                       _infoChip('소득분위', '$incomeLevel분위', Colors.orange),
                       const SizedBox(width: 8),
-                      _infoChip('직전수혜', awardedLastSemester ? 'O' : 'X', Colors.red),
+                      _infoChip(
+                        '직전수혜',
+                        awardedLastSemester ? 'O' : 'X',
+                        Colors.red,
+                      ),
                       const SizedBox(width: 8),
-                      if (minAmount > 0) _infoChip('최소금액', '${minAmount ~/ 10000}만↑', Colors.deepPurple),
-                      if (minAmount > 0 || (personalTuition > 0 && minPercentage > 0)) const SizedBox(width: 8),
-                      if (personalTuition > 0 && minPercentage > 0) _infoChip('커버율', '$minPercentage%↑', Colors.blue),
+                      if (minAmount > 0)
+                        _infoChip(
+                          '최소금액',
+                          '${minAmount ~/ 10000}만↑',
+                          Colors.deepPurple,
+                        ),
+                      if (minAmount > 0 ||
+                          (personalTuition > 0 && minPercentage > 0))
+                        const SizedBox(width: 8),
+                      if (personalTuition > 0 && minPercentage > 0)
+                        _infoChip('커버율', '$minPercentage%↑', Colors.blue),
                     ],
                   ),
                 ),
@@ -103,11 +123,27 @@ class ScholarshipInfoCard extends StatelessWidget {
                         onTap: () => onFilterChanged(f),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                          decoration: BoxDecoration(color: filter == f ? Colors.teal.shade600 : Colors.grey.shade100, borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: filter == f
+                                ? Colors.teal.shade600
+                                : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           child: Text(
                             f,
-                            style: TextStyle(fontSize: 13, color: filter == f ? Colors.white : Colors.grey.shade700, fontWeight: filter == f ? FontWeight.bold : FontWeight.normal),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: filter == f
+                                  ? Colors.white
+                                  : Colors.grey.shade700,
+                              fontWeight: filter == f
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
                         ),
                       ),
@@ -133,7 +169,11 @@ class ScholarshipInfoCard extends StatelessWidget {
         Text(label, style: TextStyle(fontSize: 10, color: color)),
         Text(
           value,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
       ],
     ),

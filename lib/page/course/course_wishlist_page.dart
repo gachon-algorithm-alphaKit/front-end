@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../api/auth_api.dart';
 import '../../api/course_service.dart';
 import '../../api/wishlist_service.dart';
 import '../../model/course_model.dart';
 import '../../provider/wishlist_provider.dart';
-import '../login/login_page.dart';
 
 class CourseWishlistPage extends ConsumerStatefulWidget {
   const CourseWishlistPage({super.key});

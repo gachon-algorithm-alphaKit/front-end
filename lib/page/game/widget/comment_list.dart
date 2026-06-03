@@ -25,7 +25,6 @@ class CommentList extends ConsumerStatefulWidget {
 class _CommentListState extends ConsumerState<CommentList> {
   final _scrollController = ScrollController();
   final _textController = TextEditingController();
-  String _currentSort = 'latest';
 
   String get _providerKey => '${widget.topicId}_${widget.opinion}';
 
@@ -61,7 +60,7 @@ class _CommentListState extends ConsumerState<CommentList> {
           child: Row(
             children: [
               Text(
-                '댓글 ${state.comments.length}',
+                '총 ${state.totalCount}',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -69,9 +68,9 @@ class _CommentListState extends ConsumerState<CommentList> {
                 ),
               ),
               const Spacer(),
-              _buildSortChip('최신순', 'latest'),
+              _buildSortChip('최신순', 'latest', state.sort),
               const SizedBox(width: 6),
-              _buildSortChip('추천순', 'like'),
+              _buildSortChip('추천순', 'like', state.sort),
             ],
           ),
         ),
@@ -142,8 +141,8 @@ class _CommentListState extends ConsumerState<CommentList> {
     );
   }
 
-  Widget _buildSortChip(String label, String sortValue) {
-    final selected = _currentSort == sortValue;
+  Widget _buildSortChip(String label, String sortValue, String currentSort) {
+    final selected = currentSort == sortValue;
     return ChoiceChip(
       label: Text(
         label,
@@ -160,8 +159,7 @@ class _CommentListState extends ConsumerState<CommentList> {
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
       onSelected: (v) {
-        if (v && _currentSort != sortValue) {
-          setState(() => _currentSort = sortValue);
+        if (v && currentSort != sortValue) {
           ref
               .read(topicCommentProvider(_providerKey).notifier)
               .changeSort(sortValue);

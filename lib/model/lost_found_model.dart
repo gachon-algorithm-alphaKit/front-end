@@ -37,8 +37,9 @@ class LostItemPost {
         sim = 100;
       } else {
         int dist = score['levenshtein_distance'] ?? 0;
-        if (dist == 0) sim = 100;
-        else if (dist == 1) sim = 95;
+        if (dist == 0) {
+          sim = 100;
+        } else if (dist == 1) sim = 95;
         else if (dist == 2) sim = 90;
         else sim = 80;
       }

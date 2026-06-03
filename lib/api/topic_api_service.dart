@@ -166,7 +166,7 @@ class TopicApiService {
       final queryParams = {
         'opinion': opinion.toString(),
         'sort': sort,
-        if (cursor != null) 'cursor': cursor,
+        'cursor': ?cursor,
       };
       final uri = Uri.parse('$baseUrl/topics/$topicId/comments/list/')
           .replace(queryParameters: queryParams);
@@ -182,6 +182,8 @@ class TopicApiService {
           return {
             'comments': comments,
             'next_cursor': data['next_cursor'],
+            'has_more': data['has_more'] ?? false,
+            'total_count': data['total_count'] ?? 0,
           };
         }
       }

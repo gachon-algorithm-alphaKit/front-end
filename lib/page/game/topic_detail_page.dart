@@ -121,138 +121,145 @@ class _TopicDetailPageState extends ConsumerState<TopicDetailPage>
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: buildAppBar('밸런스 게임', Colors.deepPurple),
-      body: Column(
-        children: [
-          // 비활성 토픽 배너
-          if (!isActive)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                border: Border(
-                  bottom: BorderSide(color: Colors.orange.shade200),
-                ),
-              ),
-              child: Row(
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverToBoxAdapter(
+              child: Column(
                 children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 18, color: Colors.orange.shade700),
-                  const SizedBox(width: 8),
-                  Text(
-                    '종료된 토픽입니다',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.orange.shade800,
+                  // 비활성 토픽 배너
+                  if (!isActive)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        border: Border(
+                          bottom: BorderSide(color: Colors.orange.shade200),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded,
+                              size: 18, color: Colors.orange.shade700),
+                          const SizedBox(width: 8),
+                          Text(
+                            '종료된 토픽입니다',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.orange.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // 토픽 헤더
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.deepPurple.shade600,
+                          Colors.deepPurple.shade800,
+                        ],
+                      ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentTopic.formattedDate,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          currentTopic.title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // 투표 패널
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              VotePanel(
+                                topic: currentTopic,
+                                voteStat: voteStat,
+                                isActive: isActive,
+                                onVote: _handleVote,
+                                onChangeVote1: () => _handleVote(true),
+                                onChangeVote2: () => _handleVote(false),
+                              ),
+                              if (voteStat != null) ...[
+                                const SizedBox(height: 12),
+                                VoteCountBadge(count: voteStat.totalCount),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-
-          // 토픽 헤더
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.deepPurple.shade600,
-                  Colors.deepPurple.shade800,
-                ],
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _TabBarDelegate(
+                OpinionTabBar(
+                  controller: _tabController,
+                  opinion1: currentTopic.opinion1,
+                  opinion2: currentTopic.opinion2,
+                ),
               ),
             ),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  currentTopic.formattedDate,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  currentTopic.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // 투표 패널
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      VotePanel(
-                        topic: currentTopic,
-                        voteStat: voteStat,
-                        isActive: isActive,
-                        onVote: _handleVote,
-                        onChangeVote1: () => _handleVote(true),
-                        onChangeVote2: () => _handleVote(false),
-                      ),
-                      if (voteStat != null) ...[
-                        const SizedBox(height: 12),
-                        VoteCountBadge(count: voteStat.totalCount),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // Opinion 1 탭
+            CommentList(
+              topicId: currentTopic.topicId,
+              opinion: true,
+              isActive: isActive,
+              isMyOpinion: currentTopic.myVote == true,
             ),
-          ),
-
-          // 탭바
-          OpinionTabBar(
-            controller: _tabController,
-            opinion1: currentTopic.opinion1,
-            opinion2: currentTopic.opinion2,
-          ),
-
-          // 탭 콘텐츠
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Opinion 1 탭
-                CommentList(
-                  topicId: currentTopic.topicId,
-                  opinion: true,
-                  isActive: isActive,
-                  isMyOpinion: currentTopic.myVote == true,
-                ),
-                // Opinion 2 탭
-                CommentList(
-                  topicId: currentTopic.topicId,
-                  opinion: false,
-                  isActive: isActive,
-                  isMyOpinion: currentTopic.myVote == false,
-                ),
-                // 통계 탭
-                _buildStatisticsTab(currentTopic),
-              ],
+            // Opinion 2 탭
+            CommentList(
+              topicId: currentTopic.topicId,
+              opinion: false,
+              isActive: isActive,
+              isMyOpinion: currentTopic.myVote == false,
             ),
-          ),
-        ],
+            // 통계 탭
+            _buildStatisticsTab(currentTopic),
+          ],
+        ),
       ),
     );
   }
@@ -351,4 +358,25 @@ class _TopicDetailPageState extends ConsumerState<TopicDetailPage>
       ],
     );
   }
+}
+
+class _TabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _TabBarDelegate(this.child);
+
+  @override
+  double get minExtent => 60.0;
+  @override
+  double get maxExtent => 60.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: const Color(0xFFF5F7FA),
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) => true;
 }

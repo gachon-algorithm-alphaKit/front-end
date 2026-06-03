@@ -2,11 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../api/auth_api.dart';
 import '../../api/course_service.dart';
 import '../../model/course_model.dart';
 import '../../provider/wishlist_provider.dart';
-import '../login/login_page.dart';
 import 'course_wishlist_page.dart';
 
 class CourseSearchPage extends ConsumerStatefulWidget {

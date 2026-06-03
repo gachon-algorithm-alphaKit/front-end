@@ -207,7 +207,7 @@ class StudyRoomService {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         if (decoded['status'] == 'success') {
           final List data = decoded['data']['reservations'] ?? [];
-          return data.map((json) => StudyRoomReservation(
+          final allReservations = data.map((json) => StudyRoomReservation(
             id: json['id'],
             roomName: json['roomName'],
             location: json['location'],
@@ -215,6 +215,31 @@ class StudyRoomService {
             startHour: json['startHour'],
             endHour: json['endHour'],
           )).toList();
+
+          final now = DateTime.now();
+          final validReservations = <StudyRoomReservation>[];
+
+          for (final res in allReservations) {
+            try {
+              final parts = res.date.split('.');
+              if (parts.length == 3) {
+                final year = int.parse(parts[0]);
+                final month = int.parse(parts[1]);
+                final day = int.parse(parts[2]);
+                final endTime = DateTime(year, month, day, res.endHour);
+
+                if (endTime.isBefore(now)) {
+                  cancelReservation(res.id);
+                  continue;
+                }
+              }
+            } catch (e) {
+              print('Error parsing date: $e');
+            }
+            validReservations.add(res);
+          }
+
+          return validReservations;
         }
       }
     } catch (e) {

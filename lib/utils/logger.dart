@@ -51,7 +51,7 @@ class CustomLogger {
         file.parent.createSync(recursive: true);
       }
 
-      final jsonString = jsonEncode(logData) + '\n';
+      final jsonString = '${jsonEncode(logData)}\n';
       await file.writeAsString(jsonString, mode: FileMode.append);
     } catch (e) {
       // If writing to file fails (e.g. on real mobile device where project path is inaccessible),

@@ -314,7 +314,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                                         borderRadius: BorderRadius.circular(11),
                                         child: _newImageFile != null
                                             ? Image.file(File(_newImageFile!.path), fit: BoxFit.cover)
-                                            : Image.network(_existingImageUrl!.startsWith('http') ? _existingImageUrl! : '${LostFoundService.baseUrl}$_existingImageUrl', fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined)),
+                                            : Image.network(_existingImageUrl!.startsWith('http') ? _existingImageUrl! : '${LostFoundService.baseUrl}$_existingImageUrl', fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined)),
                                       ),
                                       Positioned(
                                         top: 8,

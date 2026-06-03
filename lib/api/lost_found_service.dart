@@ -55,9 +55,8 @@ class LostFoundService {
       
       var response = await request.send();
       if (response.statusCode == 201) {
-        var responseData = await response.stream.bytesToString();
-        // Since backend might return utf8
-        var decoded = jsonDecode(utf8.decode(responseData.codeUnits));
+        var responseBytes = await response.stream.toBytes();
+        var decoded = jsonDecode(utf8.decode(responseBytes));
         if (decoded['status'] == 'success') {
           return LostItemPost.fromJson(decoded['data']);
         }
@@ -102,8 +101,8 @@ class LostFoundService {
       
       var response = await request.send();
       if (response.statusCode == 200) {
-        var responseData = await response.stream.bytesToString();
-        var decoded = jsonDecode(utf8.decode(responseData.codeUnits));
+        var responseBytes = await response.stream.toBytes();
+        var decoded = jsonDecode(utf8.decode(responseBytes));
         if (decoded['status'] == 'success') {
           return LostItemPost.fromJson(decoded['data']);
         }

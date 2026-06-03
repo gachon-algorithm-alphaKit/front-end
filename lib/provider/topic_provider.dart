@@ -62,29 +62,57 @@ class ActiveTopicNotifier extends StateNotifier<ActiveTopicState> {
     }
   }
 
-  /// 투표
+  /// 투표 (Optimistic Update)
   Future<bool> vote(bool opinion, {bool confirmDelete = false}) async {
     final topic = state.topic;
     if (topic == null) return false;
+
+    final previousState = state;
+    
+    // 낙관적 업데이트
+    final optimisticTopic = topic.copyWith(
+      myVote: opinion,
+      totalVoteCount: topic.totalVoteCount + (topic.hasVoted ? 0 : 1),
+    );
+    
+    VoteStat? optimisticStat = state.voteStat;
+    if (optimisticStat != null) {
+      if (topic.hasVoted) {
+        optimisticStat = VoteStat(
+          opinion1Count: optimisticStat.opinion1Count + (opinion ? 1 : -1),
+          opinion2Count: optimisticStat.opinion2Count + (opinion ? -1 : 1),
+          totalCount: optimisticStat.totalCount,
+        );
+      } else {
+        optimisticStat = VoteStat(
+          opinion1Count: optimisticStat.opinion1Count + (opinion ? 1 : 0),
+          opinion2Count: optimisticStat.opinion2Count + (opinion ? 0 : 1),
+          totalCount: optimisticStat.totalCount + 1,
+        );
+      }
+    }
+    
+    state = state.copyWith(topic: optimisticTopic, voteStat: optimisticStat);
 
     final result = await TopicApiService.vote(
       topic.topicId,
       opinion,
       confirmDelete: confirmDelete,
     );
-    if (result == null) return false;
-
-    if (result['confirm_required'] == true) {
-      return false; // UI에서 확인 다이얼로그 표시 필요
+    
+    if (result == null) {
+      state = previousState;
+      return false;
     }
 
-    // 투표 성공 → 상태 갱신
-    final newTopic = topic.copyWith(
-      myVote: opinion,
-      totalVoteCount: topic.totalVoteCount + (topic.hasVoted ? 0 : 1),
-    );
+    if (result['confirm_required'] == true) {
+      state = previousState;
+      return false; // UI에서 확인 다이얼로그 다시 필요
+    }
+
+    // 서버의 정확한 통계로 보정
     final stat = await TopicApiService.fetchVoteStat(topic.topicId);
-    state = state.copyWith(topic: newTopic, voteStat: stat);
+    state = state.copyWith(topic: optimisticTopic, voteStat: stat);
     return true;
   }
 
@@ -213,6 +241,7 @@ class TopicCommentState {
   final bool hasMore;
   final String? nextCursor;
   final String sort; // 'latest' or 'popular'
+  final int totalCount;
 
   const TopicCommentState({
     this.comments = const [],
@@ -221,6 +250,7 @@ class TopicCommentState {
     this.hasMore = true,
     this.nextCursor,
     this.sort = 'latest',
+    this.totalCount = 0,
   });
 
   TopicCommentState copyWith({
@@ -230,6 +260,7 @@ class TopicCommentState {
     bool? hasMore,
     String? nextCursor,
     String? sort,
+    int? totalCount,
     bool clearCursor = false,
   }) {
     return TopicCommentState(
@@ -239,6 +270,7 @@ class TopicCommentState {
       hasMore: hasMore ?? this.hasMore,
       nextCursor: clearCursor ? null : (nextCursor ?? this.nextCursor),
       sort: sort ?? this.sort,
+      totalCount: totalCount ?? this.totalCount,
     );
   }
 }
@@ -271,6 +303,7 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
       );
       final comments = result['comments'] as List<TopicComment>;
       final nextCursor = result['next_cursor'] as String?;
+      final totalCount = result['total_count'] as int?;
 
       await TopicCacheService.cacheComments(arg, comments);
 
@@ -279,6 +312,7 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
         isLoading: false,
         hasMore: nextCursor != null,
         nextCursor: nextCursor,
+        totalCount: totalCount,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false);
@@ -298,12 +332,14 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
       );
       final newComments = result['comments'] as List<TopicComment>;
       final nextCursor = result['next_cursor'] as String?;
+      final totalCount = result['total_count'] as int?;
 
       state = state.copyWith(
         comments: [...state.comments, ...newComments],
         isLoading: false,
         hasMore: nextCursor != null,
         nextCursor: nextCursor,
+        totalCount: totalCount,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false);
@@ -323,8 +359,9 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
       final newComment = await TopicApiService.createComment(_topicId, text);
       if (newComment != null) {
         state = state.copyWith(
-          comments: [...state.comments, newComment],
+          comments: [newComment, ...state.comments],
           isSubmitting: false,
+          totalCount: state.totalCount + 1,
         );
         return true;
       }
@@ -335,41 +372,62 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
     return false;
   }
 
-  /// 댓글 수정
+  /// 댓글 수정 (Optimistic Update)
   Future<bool> editComment(int commentId, String newText) async {
-    state = state.copyWith(isSubmitting: true);
+    final previousComments = state.comments;
+    
+    // 낙관적 업데이트
+    final optimistic = state.comments.map((c) {
+      return c.commentId == commentId ? c.copyWith(comment: newText) : c;
+    }).toList();
+    state = state.copyWith(comments: optimistic, isSubmitting: true);
+
     try {
       final success = await TopicApiService.updateComment(commentId, newText);
       if (success) {
-        final updated = state.comments.map((c) {
-          return c.commentId == commentId ? c.copyWith(comment: newText) : c;
-        }).toList();
-        state = state.copyWith(comments: updated, isSubmitting: false);
+        state = state.copyWith(isSubmitting: false);
         return true;
       }
     } catch (e) {
-      // 실패 시 아무것도 하지 않음
+      // 실패 시 롤백 로직 아래에서 수행
     }
-    state = state.copyWith(isSubmitting: false);
+    
+    // 롤백
+    state = state.copyWith(comments: previousComments, isSubmitting: false);
     return false;
   }
 
-  /// 댓글 삭제
+  /// 댓글 삭제 (Optimistic Update)
   Future<bool> removeComment(int commentId) async {
-    state = state.copyWith(isSubmitting: true);
+    final previousComments = state.comments;
+    final previousCount = state.totalCount;
+
+    // 낙관적 업데이트
+    final optimistic = state.comments
+        .where((c) => c.commentId != commentId)
+        .toList();
+    state = state.copyWith(
+      comments: optimistic, 
+      isSubmitting: true,
+      totalCount: state.totalCount > 0 ? state.totalCount - 1 : 0,
+    );
+
     try {
       final success = await TopicApiService.deleteComment(commentId);
       if (success) {
-        final updated = state.comments
-            .where((c) => c.commentId != commentId)
-            .toList();
-        state = state.copyWith(comments: updated, isSubmitting: false);
+        state = state.copyWith(isSubmitting: false);
         return true;
       }
     } catch (e) {
-      // 실패 시 아무것도 하지 않음
+      // 실패 시 롤백 로직 아래에서 수행
     }
-    state = state.copyWith(isSubmitting: false);
+    
+    // 롤백
+    state = state.copyWith(
+      comments: previousComments, 
+      isSubmitting: false,
+      totalCount: previousCount,
+    );
     return false;
   }
 

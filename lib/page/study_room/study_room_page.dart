@@ -197,6 +197,15 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
   Widget build(BuildContext context) {
     final myReservations = ref.watch(reservationProvider);
 
+    final searchDateStr = "${_date.year}.${_date.month.toString().padLeft(2, "0")}.${_date.day.toString().padLeft(2, "0")}";
+    bool hasOverlap = false;
+    for (final res in myReservations) {
+      if (res.date == searchDateStr && _startHour < res.endHour && _endHour > res.startHour) {
+        hasOverlap = true;
+        break;
+      }
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -397,7 +406,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                 ),
                 const SizedBox(height: 16),
                 ..._results.asMap().entries.map(
-                  (e) => Padding(padding: const EdgeInsets.only(bottom: 10), child: e.value.isSplitBooking ? _comboRoomCard(e.value) : _roomCard(e.value, e.key == 0)),
+                  (e) => Padding(padding: const EdgeInsets.only(bottom: 10), child: e.value.isSplitBooking ? _comboRoomCard(e.value, hasOverlap) : _roomCard(e.value, e.key == 0, hasOverlap)),
                 ),
                 if (_isFetchingMore)
                   const Padding(
@@ -435,7 +444,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
     ],
   );
 
-  Widget _comboRoomCard(RoomRecommendation rec) {
+  Widget _comboRoomCard(RoomRecommendation rec, bool hasOverlap) {
     return Card(
       elevation: 0,
       color: Colors.amber.shade50,
@@ -458,9 +467,17 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                 ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: rec.isAvailable ? () => _reserveCombo(rec) : null,
-                  style: FilledButton.styleFrom(backgroundColor: rec.isAvailable ? Colors.amber.shade700 : Colors.grey.shade400, minimumSize: const Size(60, 36)),
-                  child: Text(rec.isAvailable ? '일괄 예약' : '마감', style: const TextStyle(fontSize: 13)),
+                  onPressed: () {
+                     if (hasOverlap) {
+                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('같은 시간대에 이미 예약을 하셨습니다.'), backgroundColor: Colors.orange.shade600, behavior: SnackBarBehavior.floating));
+                       return;
+                     }
+                     if (rec.isAvailable) {
+                       _reserveCombo(rec);
+                     }
+                  },
+                  style: FilledButton.styleFrom(backgroundColor: hasOverlap ? Colors.grey.shade400 : (rec.isAvailable ? Colors.amber.shade700 : Colors.grey.shade400), minimumSize: const Size(60, 36)),
+                  child: Text(hasOverlap ? '예약 불가' : (rec.isAvailable ? '일괄 예약' : '마감'), style: const TextStyle(fontSize: 13)),
                 ),
               ],
             ),
@@ -494,7 +511,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
     );
   }
 
-  Widget _roomCard(RoomRecommendation rec, bool isTop) => Card(
+  Widget _roomCard(RoomRecommendation rec, bool isTop, bool hasOverlap) => Card(
     elevation: 0,
     color: Colors.white,
     shape: RoundedRectangleBorder(
@@ -588,14 +605,22 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
           ),
           const SizedBox(width: 8),
           FilledButton(
-            onPressed: rec.isAvailable ? () => _reserve(rec) : null,
+            onPressed: () {
+               if (hasOverlap) {
+                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('같은 시간대에 이미 예약을 하셨습니다.'), backgroundColor: Colors.orange.shade600, behavior: SnackBarBehavior.floating));
+                 return;
+               }
+               if (rec.isAvailable) {
+                 _reserve(rec);
+               }
+            },
             style: FilledButton.styleFrom(
-              backgroundColor: rec.isAvailable ? Colors.green.shade600 : Colors.grey.shade400,
+              backgroundColor: hasOverlap ? Colors.grey.shade400 : (rec.isAvailable ? Colors.green.shade600 : Colors.grey.shade400),
               disabledBackgroundColor: Colors.grey.shade300,
               minimumSize: const Size(60, 36),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(rec.isAvailable ? '예약' : '마감', style: const TextStyle(fontSize: 13)),
+            child: Text(hasOverlap ? '예약 불가' : (rec.isAvailable ? '예약' : '마감'), style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),
