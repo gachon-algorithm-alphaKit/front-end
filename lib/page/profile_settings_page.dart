@@ -7,6 +7,7 @@ import '../api/auth_api.dart';
 import '../component/picker_option.dart';
 import '../model/user_profile.dart';
 import 'login/login_page.dart';
+import 'package:alpha_kit/config/api_constants.dart';
 
 class ProfileSettingsPage extends StatefulWidget {
   final UserProfile profile;
@@ -313,7 +314,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             image: _image != null
                                 ? DecorationImage(image: FileImage(File(_image!.path)), fit: BoxFit.cover)
                                 : (_profile.profileImgUrl != null
-                                      ? DecorationImage(image: NetworkImage('http://10.0.2.2:8000${_profile.profileImgUrl}'), fit: BoxFit.cover)
+                                      ? DecorationImage(image: NetworkImage('${ApiConstants.baseUrl}${_profile.profileImgUrl}'), fit: BoxFit.cover)
                                       : null),
                           ),
                           child: _image == null && _profile.profileImgUrl == null ? const Icon(Icons.person_rounded, size: 52, color: Colors.white) : null,

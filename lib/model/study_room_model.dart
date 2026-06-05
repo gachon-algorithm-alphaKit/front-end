@@ -113,6 +113,7 @@ class RoomRecommendation {
 
 class StudyRoomReservation {
   final String id, roomName, location, date;
+  final String? reservationGroupId;
   final int startHour, endHour;
 
   const StudyRoomReservation({
@@ -122,5 +123,6 @@ class StudyRoomReservation {
     required this.date,
     required this.startHour,
     required this.endHour,
+    this.reservationGroupId,
   });
 }

@@ -4,11 +4,7 @@ class WordFrequencyChart extends StatelessWidget {
   final Map<String, int> frequencies;
   final int minimumComments;
 
-  const WordFrequencyChart({
-    super.key,
-    required this.frequencies,
-    this.minimumComments = 10,
-  });
+  const WordFrequencyChart({super.key, required this.frequencies, this.minimumComments = 10});
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +12,7 @@ class WordFrequencyChart extends StatelessWidget {
       return _buildEmptyState();
     }
 
-    final maxValue =
-        frequencies.values.reduce((a, b) => a > b ? a : b).toDouble();
+    final maxValue = frequencies.values.reduce((a, b) => a > b ? a : b).toDouble();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,16 +21,11 @@ class WordFrequencyChart extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 16),
           child: Row(
             children: [
-              Icon(Icons.analytics_rounded,
-                  size: 20, color: Colors.deepPurple.shade600),
+              Icon(Icons.analytics_rounded, size: 20, color: Colors.deepPurple.shade600),
               const SizedBox(width: 8),
               Text(
                 '자주 언급된 키워드',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
               ),
             ],
           ),
@@ -50,11 +40,7 @@ class WordFrequencyChart extends StatelessWidget {
                   width: 64,
                   child: Text(
                     entry.key,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey.shade700),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -64,30 +50,16 @@ class WordFrequencyChart extends StatelessWidget {
                     children: [
                       Container(
                         height: 24,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
+                        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
                       ),
                       FractionallySizedBox(
                         widthFactor: ratio.clamp(0.05, 1.0),
                         child: Container(
                           height: 24,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.deepPurple.shade400,
-                                Colors.deepPurple.shade600,
-                              ],
-                            ),
+                            gradient: LinearGradient(colors: [Colors.deepPurple.shade400, Colors.deepPurple.shade600]),
                             borderRadius: BorderRadius.circular(6),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.deepPurple.withValues(alpha: 0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                            boxShadow: [BoxShadow(color: Colors.deepPurple.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
                           ),
                         ),
                       ),
@@ -99,11 +71,7 @@ class WordFrequencyChart extends StatelessWidget {
                   width: 28,
                   child: Text(
                     '${entry.value}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.deepPurple.shade600,
-                    ),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.deepPurple.shade600),
                     textAlign: TextAlign.end,
                   ),
                 ),
@@ -122,19 +90,9 @@ class WordFrequencyChart extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.bar_chart_rounded,
-              size: 48,
-              color: Colors.grey.shade300,
-            ),
+            Icon(Icons.bar_chart_rounded, size: 48, color: Colors.grey.shade300),
             const SizedBox(height: 12),
-            Text(
-              '댓글이 더 모이면 통계를 보여드립니다 📊',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
-            ),
+            Text('댓글이 더 모이면 통계를 보여드립니다 📊', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
           ],
         ),
       ),

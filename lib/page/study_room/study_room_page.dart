@@ -156,20 +156,9 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
     try {
       final reservationIds = await StudyRoomService.reserveCombo(rec.comboSlots, _capacity);
       if (reservationIds != null && reservationIds.isNotEmpty && mounted) {
-        // 예약 내역 저장 (연속 예약)
-        for (int i = 0; i < reservationIds.length; i++) {
-          final slot = rec.comboSlots[i];
-          ref.read(reservationProvider.notifier).addReservation(
-            StudyRoomReservation(
-              id: reservationIds[i],
-              roomName: slot['name'],
-              location: slot['place_name'],
-              date: "${_date.year}.${_date.month.toString().padLeft(2, "0")}.${_date.day.toString().padLeft(2, "0")}",
-              startHour: slot['start_hour'],
-              endHour: slot['end_hour'],
-            ),
-          );
-        }
+        // 예약 내역 동기화 (서버에서 최신 상태를 가져와 그룹 ID까지 포함하도록 처리)
+        final latestReservations = await StudyRoomService.fetchMyReservations();
+        ref.read(reservationProvider.notifier).sync(latestReservations);
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -462,7 +451,7 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                 Icon(Icons.link, color: Colors.amber.shade800),
                 const SizedBox(width: 8),
                 Text(
-                  '공실 조합 추천 (${rec.comboSlots.length}시간 연속)',
+                  '공실 조합 추천 (점수: ${rec.score.round()})',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.amber.shade900),
                 ),
                 const Spacer(),
@@ -499,7 +488,26 @@ class _StudyRoomPageState extends ConsumerState<StudyRoomPage> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text('${slot['name']} (${slot['place_name']})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${slot['name']} (${slot['place_name']}) · ${slot['capacity'] ?? '?'}인실', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                          if (slot['matched_facilities'] != null && (slot['matched_facilities'] as List).isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Wrap(
+                                spacing: 4,
+                                children: (slot['matched_facilities'] as List).map((f) => Chip(
+                                  label: Text(f.toString(), style: TextStyle(fontSize: 10, color: Colors.amber.shade900)),
+                                  padding: EdgeInsets.zero,
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  backgroundColor: Colors.amber.shade200,
+                                  side: BorderSide.none,
+                                )).toList(),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

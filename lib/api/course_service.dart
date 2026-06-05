@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../model/course_model.dart';
+import 'package:alpha_kit/config/api_constants.dart';
 
 class CourseService {
-  static const String baseUrl = 'http://10.0.2.2:8000';
+  static const String baseUrl = ApiConstants.baseUrl;
 
   // TODO: GET /api/courses/autocomplete?q=&type=name|professor|content
   static Future<List<String>> autocomplete(

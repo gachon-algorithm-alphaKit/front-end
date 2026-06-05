@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:alpha_kit/config/api_constants.dart';
 
 class AuthApi {
   // Android Emulator에서는 localhost 대신 10.0.2.2를 사용합니다.
-  static const String baseUrl = 'http://10.0.2.2:8000/api/students';
+  static const String baseUrl = '${ApiConstants.baseUrl}/api/students';
 
   static Future<Map<String, dynamic>> login(String username, String password, int schoolId) async {
     final response = await http.post(

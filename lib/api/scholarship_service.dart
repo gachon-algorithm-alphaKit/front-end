@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/scholarship_model.dart';
+import 'package:alpha_kit/config/api_constants.dart';
 
 class ScholarshipService {
   static Future<List<Scholarship>> fetch(
@@ -18,7 +19,7 @@ class ScholarshipService {
     
     // API Call
     try {
-      final url = 'http://10.0.2.2:8000/api/scholarships/?page=$page&limit=$limit&gpa=$gpa&income_bracket=$incomeLevel&awarded_last_semester=${awardedLastSemester ? "true" : "false"}';
+      final url = '${ApiConstants.baseUrl}/api/scholarships/?page=$page&limit=$limit&gpa=$gpa&income_bracket=$incomeLevel&awarded_last_semester=${awardedLastSemester ? "true" : "false"}';
       final response = await http.get(
         Uri.parse(url),
         headers: token != null ? {'Authorization': 'Bearer $token'} : {},

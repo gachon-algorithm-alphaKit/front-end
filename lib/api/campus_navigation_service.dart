@@ -13,9 +13,10 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../model/route_model.dart';
+import 'package:alpha_kit/config/api_constants.dart';
 
 class CampusNavigationService {
-  static const String baseUrl = 'http://10.0.2.2:8000';
+  static const String baseUrl = ApiConstants.baseUrl;
   static bool _initialized = false;
 
   // ----------------------------------------------------------

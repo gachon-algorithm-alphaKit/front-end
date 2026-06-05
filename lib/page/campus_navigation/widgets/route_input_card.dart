@@ -85,7 +85,7 @@ class RouteInputCard extends StatelessWidget {
     return Autocomplete<String>(
       key: ObjectKey(ctrl),
       initialValue: TextEditingValue(text: ctrl.text),
-      optionsBuilder: (v) => v.text.isEmpty ? const [] : _buildings.where((b) => b.contains(v.text)),
+      optionsBuilder: (v) => v.text.isEmpty ? const [] : _buildings.where((b) => b.toLowerCase().contains(v.text.toLowerCase())),
       onSelected: (s) {
         ctrl.text = s;
         FocusManager.instance.primaryFocus?.unfocus();

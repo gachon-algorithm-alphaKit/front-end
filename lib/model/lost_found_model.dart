@@ -12,6 +12,9 @@ class LostItemPost {
   final int similarity;
   final bool status;
   final bool isMine;
+  final String authorName;
+  final String authorDept;
+  final String authorProfileImg;
 
   const LostItemPost({
     required this.itemId,
@@ -27,6 +30,9 @@ class LostItemPost {
     this.similarity = 100,
     this.status = false,
     this.isMine = false,
+    this.authorName = '알 수 없음',
+    this.authorDept = '소속 없음',
+    this.authorProfileImg = '',
   });
 
   factory LostItemPost.fromJson(Map<String, dynamic> json) {
@@ -72,6 +78,9 @@ class LostItemPost {
       similarity: sim,
       status: _boolFromJson(json['status'], fallback: false),
       isMine: _boolFromJson(json['is_mine'], fallback: false),
+      authorName: json['author_name'] ?? '알 수 없음',
+      authorDept: json['author_dept'] ?? '소속 없음',
+      authorProfileImg: json['author_profile_img'] ?? '',
     );
   }
 
@@ -110,6 +119,9 @@ class LostItemPost {
       similarity: similarity,
       status: status ?? this.status,
       isMine: isMine,
+      authorName: authorName,
+      authorDept: authorDept,
+      authorProfileImg: authorProfileImg,
     );
   }
 

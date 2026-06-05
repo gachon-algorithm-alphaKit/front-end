@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../provider/topic_provider.dart';
-import '../game_dashboard_page.dart';
+import '../topic_detail_page.dart';
 
 class TopicBannerWidget extends ConsumerWidget {
   const TopicBannerWidget({super.key});
@@ -32,7 +32,7 @@ class TopicBannerWidget extends ConsumerWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const GameDashboardPage()),
+          MaterialPageRoute(builder: (_) => TopicDetailPage(topic: topic)),
         );
       },
       child: Container(

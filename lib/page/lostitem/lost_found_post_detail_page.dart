@@ -371,8 +371,43 @@ class _LostFoundPostDetailPageState extends ConsumerState<LostFoundPostDetailPag
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // 작성자 정보
                               Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundImage: (!_post.isAnonymous && _post.authorProfileImg.isNotEmpty)
+                                        ? NetworkImage('${_post.authorProfileImg.startsWith('http') ? _post.authorProfileImg : '${LostFoundService.baseUrl}${_post.authorProfileImg}'}?t=${DateTime.now().millisecondsSinceEpoch}')
+                                        : null,
+                                    child: (_post.isAnonymous || _post.authorProfileImg.isEmpty)
+                                        ? Icon(Icons.person, size: 24, color: Colors.grey.shade500)
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _post.isAnonymous ? '익명' : _post.authorName,
+                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+                                      ),
+                                      if (!_post.isAnonymous) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _post.authorDept,
+                                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              // 상태 및 날짜
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -386,33 +421,14 @@ class _LostFoundPostDetailPageState extends ConsumerState<LostFoundPostDetailPag
                                       style: TextStyle(fontSize: 12, color: _post.status ? Colors.grey.shade600 : Colors.orange.shade700, fontWeight: FontWeight.bold),
                                     ),
                                   ),
-                                  if (_post.isAnonymous) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.grey.shade300),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.visibility_off_outlined, size: 12, color: Colors.grey.shade500),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '익명',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                  const SizedBox(height: 6),
+                                  Text(_post.date, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                                 ],
                               ),
-                              Text(_post.date, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                             ],
                           ),
+                          const SizedBox(height: 16),
+                          const Divider(height: 1, color: Color(0xFFEEEEEE)),
                           const SizedBox(height: 14),
                           Container(
                             width: 72,
@@ -464,7 +480,6 @@ class _LostFoundPostDetailPageState extends ConsumerState<LostFoundPostDetailPag
                         children: [
                           _detailRow(Icons.description_outlined, '특징', _post.description),
                           _detailRow(Icons.location_on_outlined, '분실 장소', _post.location),
-                          if (_post.isAnonymous) _detailRow(Icons.visibility_off_outlined, '공개 여부', '익명 게시글'),
                         ],
                       ),
                     ),
