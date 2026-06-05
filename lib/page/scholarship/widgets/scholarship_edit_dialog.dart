@@ -85,7 +85,7 @@ class _ScholarshipEditDialogState extends State<ScholarshipEditDialog> {
                   onPressed: gpa > 0.0
                       ? () {
                           setState(() {
-                            gpa = (((gpa - 0.1).clamp(0.0, 4.5) * 10).floor() / 10);
+                            gpa = ((((gpa * 10).round() - 1) / 10).clamp(0.0, 4.5));
                             gpaCtrl.text = gpa.toStringAsFixed(1);
                           });
                         }
@@ -131,7 +131,7 @@ class _ScholarshipEditDialogState extends State<ScholarshipEditDialog> {
                   onPressed: gpa < 4.5
                       ? () {
                           setState(() {
-                            gpa = (((gpa + 0.1).clamp(0.0, 4.5) * 10).floor() / 10);
+                            gpa = ((((gpa * 10).round() + 1) / 10).clamp(0.0, 4.5));
                             gpaCtrl.text = gpa.toStringAsFixed(1);
                           });
                         }
