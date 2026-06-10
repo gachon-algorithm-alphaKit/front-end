@@ -32,6 +32,7 @@ class LostFoundService {
     required String title,
     required bool isAnonymous,
     required String category,
+    required String place,
     required String description,
     String? imagePath,
   }) async {
@@ -48,6 +49,7 @@ class LostFoundService {
       request.fields['title'] = title;
       request.fields['is_anonymous'] = isAnonymous.toString();
       request.fields['category'] = category;
+      request.fields['place'] = place;
       request.fields['description'] = description;
       
       if (imagePath != null && imagePath.isNotEmpty) {
@@ -76,6 +78,7 @@ class LostFoundService {
     required String title,
     required bool isAnonymous,
     required String category,
+    required String place,
     required String description,
     required bool status,
     String? imagePath,
@@ -90,6 +93,7 @@ class LostFoundService {
         'title': title,
         'is_anonymous': isAnonymous,
         'category': category,
+        'place': place,
         'description': description,
         'status': status,
       };

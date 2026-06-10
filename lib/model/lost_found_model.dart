@@ -6,6 +6,7 @@ class LostItemPost {
   final String title;
   final bool isAnonymous;
   final String category;
+  final String place;
   final String description;
   final String imgFilePath;
   final String createTime;
@@ -24,6 +25,7 @@ class LostItemPost {
     required this.title,
     required this.isAnonymous,
     required this.category,
+    this.place = '',
     required this.description,
     required this.imgFilePath,
     required this.createTime,
@@ -72,6 +74,7 @@ class LostItemPost {
       title: json['title'] ?? '',
       isAnonymous: _boolFromJson(json['is_anonymous'], fallback: true),
       category: json['category'] ?? '',
+      place: json['place'] ?? '',
       description: json['description'] ?? '',
       imgFilePath: json['lost_item_img'] ?? '',
       createTime: createTimeStr,
@@ -86,8 +89,8 @@ class LostItemPost {
 
   String get id => itemId.toString();
   String get itemName => title;
-  String get location => category.isNotEmpty
-      ? category
+  String get location => place.isNotEmpty
+      ? place
       : placeId != null
       ? '장소 #$placeId'
       : '미지정';
@@ -100,6 +103,8 @@ class LostItemPost {
     String? itemName,
     String? description,
     String? location,
+    String? category,
+    String? place,
     bool? isAnonymous,
     String? imagePath,
     bool? status,
@@ -112,7 +117,8 @@ class LostItemPost {
       studentId: studentId,
       title: itemName ?? title,
       isAnonymous: isAnonymous ?? this.isAnonymous,
-      category: location ?? category,
+      category: category ?? this.category,
+      place: place ?? location ?? this.place,
       description: description ?? this.description,
       imgFilePath: clearImage ? '' : (imagePath ?? imgFilePath),
       createTime: createTime,
@@ -134,6 +140,7 @@ class LostItemPost {
       'title': title,
       'is_anonymous': isAnonymous,
       'category': category,
+      'place': place,
       'description': description,
       'lost_item_img': imgFilePath,
       'status': status,
@@ -144,7 +151,7 @@ class LostItemPost {
 
   @override
   String toString() {
-    return 'LostItemPost(itemId: $itemId, schoolId: $schoolId, placeId: $placeId, studentId: $studentId, title: $title, isAnonymous: $isAnonymous, category: $category, description: $description, imgFilePath: $imgFilePath, createTime: $createTime)';
+    return 'LostItemPost(itemId: $itemId, schoolId: $schoolId, placeId: $placeId, studentId: $studentId, title: $title, isAnonymous: $isAnonymous, category: $category, place: $place, description: $description, imgFilePath: $imgFilePath, createTime: $createTime)';
   }
 
   static bool _boolFromJson(dynamic value, {required bool fallback}) {

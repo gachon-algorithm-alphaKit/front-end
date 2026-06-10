@@ -478,6 +478,7 @@ class _LostFoundPostDetailPageState extends ConsumerState<LostFoundPostDetailPag
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
                       child: Column(
                         children: [
+                          _detailRow(Icons.category_outlined, '카테고리', _post.category),
                           _detailRow(Icons.description_outlined, '특징', _post.description),
                           _detailRow(Icons.location_on_outlined, '분실 장소', _post.location),
                         ],

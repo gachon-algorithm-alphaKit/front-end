@@ -21,6 +21,10 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
   late final TextEditingController _locationCtrl;
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
+  
+  final List<String> _categories = ['전자기기', '지갑/카드', '의류/액세서리', '가방/파우치', '학용품', '열쇠/USB', '기타'];
+  String? _selectedCategory;
+
   XFile? _newImageFile;
   String? _existingImageUrl;
   bool _isSubmitting = false;
@@ -35,9 +39,14 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
     final p = widget.initialPost;
     _itemNameCtrl = TextEditingController(text: p?.itemName ?? '');
     _descriptionCtrl = TextEditingController(text: p?.description ?? '');
-    _locationCtrl = TextEditingController(text: p?.location ?? '');
+    _locationCtrl = TextEditingController(text: p?.place ?? '');
     _isAnonymous = p?.isAnonymous ?? false;
     _status = p?.status ?? false;
+    
+    if (p?.category != null && p!.category.isNotEmpty && _categories.contains(p.category)) {
+      _selectedCategory = p.category;
+    }
+    
     if (p?.imagePath != null) _existingImageUrl = p!.imagePath;
   }
 
@@ -139,7 +148,8 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
           itemId: widget.initialPost!.itemId,
           title: _itemNameCtrl.text.trim(),
           isAnonymous: _isAnonymous,
-          category: _locationCtrl.text.trim(),
+          category: _selectedCategory ?? '기타',
+          place: _locationCtrl.text.trim(),
           description: _descriptionCtrl.text.trim(),
           status: _status,
           imagePath: _newImageFile?.path,
@@ -152,7 +162,8 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
           final post = widget.initialPost!.copyWith(
             itemName: _itemNameCtrl.text.trim(),
             description: _descriptionCtrl.text.trim(),
-            location: _locationCtrl.text.trim(),
+            category: _selectedCategory ?? '기타',
+            place: _locationCtrl.text.trim(),
             isAnonymous: _isAnonymous,
             imagePath: _newImageFile?.path ?? _existingImageUrl,
             status: _status,
@@ -165,7 +176,8 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
           schoolId: 1,
           title: _itemNameCtrl.text.trim(),
           isAnonymous: _isAnonymous,
-          category: _locationCtrl.text.trim(),
+          category: _selectedCategory ?? '기타',
+          place: _locationCtrl.text.trim(),
           description: _descriptionCtrl.text.trim(),
           imagePath: _newImageFile?.path,
         );
@@ -179,7 +191,8 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
             placeId: null,
             studentId: 1,
             title: _itemNameCtrl.text.trim(),
-            category: _locationCtrl.text.trim(),
+            category: _selectedCategory ?? '기타',
+            place: _locationCtrl.text.trim(),
             description: _descriptionCtrl.text.trim(),
             isAnonymous: _isAnonymous,
             imgFilePath: _newImageFile?.path ?? '',
@@ -260,6 +273,19 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        buildSectionLabel('카테고리 *'),
+                        DropdownButtonFormField<String>(
+                          value: _selectedCategory,
+                          decoration: _inputDeco('카테고리를 선택해주세요', Icons.category_outlined),
+                          items: _categories.map((cat) {
+                            return DropdownMenuItem(value: cat, child: Text(cat));
+                          }).toList(),
+                          onChanged: (val) {
+                            setState(() => _selectedCategory = val);
+                          },
+                          validator: (v) => v == null || v.isEmpty ? '카테고리를 선택해주세요' : null,
+                        ),
+                        const SizedBox(height: 16),
                         buildSectionLabel('물건 이름 *'),
                         TextFormField(
                           controller: _itemNameCtrl,

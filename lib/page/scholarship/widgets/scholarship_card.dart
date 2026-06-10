@@ -110,7 +110,7 @@ class ScholarshipCard extends StatelessWidget {
               Icons.account_balance_outlined,
               '소득분위',
               '${s.requiredIncomeBracket}분위 이하',
-              userIncomeLevel >= s.requiredIncomeBracket ? Colors.green : Colors.red,
+              userIncomeLevel <= s.requiredIncomeBracket ? Colors.green : Colors.red,
               null,
             ),
           _condRow(Icons.autorenew_outlined, '중복수혜', s.duplicateAllowed ? '가능 (직전학기 수혜 무관)' : '불가 (직전학기 수혜자 불가)', s.duplicateAllowed ? Colors.green : (userAwardedLastSemester ? Colors.red : Colors.green), null),
