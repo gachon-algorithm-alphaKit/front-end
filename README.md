@@ -106,7 +106,9 @@ front-end/
 │   │   ├── scholarship_service.dart #   - 장학금 목록 조회 (조건 필터)
 │   │   ├── study_room_service.dart  #   - 스터디룸 추천 / 예약 / 예약내역 / 취소
 │   │   ├── lost_found_service.dart  #   - 분실물 CRUD / 검색 / 댓글 CRUD
-│   │   └── campus_navigation_service.dart  # - 캠퍼스 경로 탐색 (A* + Nearest Neighbor)
+│   │   ├── campus_navigation_service.dart  # - 캠퍼스 경로 탐색 (A* + Nearest Neighbor)
+│   │   ├── topic_api_service.dart   #   - 밸런스 게임 토픽 조회 / 투표 / 댓글
+│   │   └── topic_cache_service.dart #   - 밸런스 게임 로컬 캐싱 처리
 │   │
 │   ├── model/                       # 📋 데이터 모델 (JSON 파싱 포함)
 │   │   ├── user_profile.dart        #   - Student, UserProfile
@@ -114,7 +116,8 @@ front-end/
 │   │   ├── scholarship_model.dart   #   - Scholarship
 │   │   ├── study_room_model.dart    #   - StudyRoom, StudyRoomReservation, RoomRecommendation
 │   │   ├── lost_found_model.dart    #   - LostItemPost, Comment
-│   │   └── route_model.dart         #   - School, Place, WaypointResult, RouteResult
+│   │   ├── route_model.dart         #   - School, Place, WaypointResult, RouteResult
+│   │   └── topic_model.dart         #   - Topic, TopicVote, TopicComment, VoteStat
 │   │
 │   ├── provider/                    # 🔄 Riverpod 상태 관리
 │   │   ├── auth_provider.dart       #   - 인증 상태 (AuthState + AuthNotifier)
@@ -226,6 +229,18 @@ front-end/
 | `createComment()` | `POST` | `/api/lost-items/<id>/comments/` | 댓글 작성 🔒 |
 | `updateComment()` | `PUT` | `/api/comments/<id>/` | 댓글 수정 🔒 |
 | `deleteComment()` | `DELETE` | `/api/comments/<id>/` | 댓글 삭제 🔒 |
+
+### 밸런스 게임 (`topic_api_service.dart`)
+
+| 메서드 | HTTP | 엔드포인트 | 설명 |
+|--------|------|-----------|------|
+| `fetchActiveTopic()` | `GET` | `/api/topics/active/` | 활성 토픽 조회 |
+| `fetchTopicList()` | `GET` | `/api/topics/` | 토픽 목록 조회 |
+| `vote()` | `POST` | `/api/topics/<id>/vote/` | 투표 진행/변경 🔒 |
+| `fetchVoteStat()` | `GET` | `/api/topics/<id>/vote/stat/` | 투표 통계 조회 🔒 |
+| `createComment()` | `POST` | `/api/topics/<id>/comments/` | 토픽 댓글 작성 🔒 |
+| `fetchComments()` | `GET` | `/api/topics/<id>/comments/list/` | 의견별 댓글 조회 |
+| `toggleLike()` | `POST` | `/api/topics/comments/<id>/like/` | 댓글 좋아요 토글 🔒 |
 
 ### 캠퍼스 네비게이션 (`campus_navigation_service.dart`)
 
