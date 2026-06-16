@@ -313,8 +313,6 @@ class CampusNavigationService {
   // 반환          : PNG 이미지 바이트 (Uint8List)
   // 실패 시        : null 반환
   // ----------------------------------------------------------
-  static const String _clientId     = '892iyj75cq';
-  static const String _clientSecret = 'ZiJpxXhpGaKwbJVRX5intB1I83C4Z3n314qZosD0';
   static const int    _mapLevel     = 16;
   static const int    _imgW         = 1024;
   static const int    _imgH         = 1024;
@@ -332,27 +330,13 @@ class CampusNavigationService {
 
     final centerLat = (lats.reduce(min) + lats.reduce(max)) / 2;
     final centerLon = (lons.reduce(min) + lons.reduce(max)) / 2;
+    final centerStr = '${centerLon.toStringAsFixed(7)},${centerLat.toStringAsFixed(7)}';
 
-    final uri = Uri.https(
-      'maps.apigw.ntruss.com',
-      '/map-static/v2/raster',
-      {
-        'w': '$w',
-        'h': '$h',
-        'center': '${centerLon.toStringAsFixed(7)},${centerLat.toStringAsFixed(7)}',
-        'level': '$_mapLevel',
-        'format': 'png',
-      },
-    );
+    final uri = Uri.parse('$baseUrl/api/campus/map/?w=$w&h=$h&center=$centerStr&level=$_mapLevel&format=png');
 
     try {
       final response = await http.get(
         uri,
-        headers: {
-          'X-NCP-APIGW-API-KEY-ID': _clientId,
-          'X-NCP-APIGW-API-KEY':    _clientSecret,
-          'Referer':                 'http://localhost',
-        },
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
