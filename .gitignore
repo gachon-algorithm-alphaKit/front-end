@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+.flutter-plugins
 
 # Symbolication related
 app.*.symbols
@@ -43,6 +44,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+android/local.properties
+android/.gradle/
+
+# IOS
+ios/Pods/
+ios/.symlinks/
 
 # Logs configuration
 log/*
@@ -56,3 +63,6 @@ log/info/*
 !log/error/.gitkeep
 !log/warn/.gitkeep
 !log/info/.gitkeep
+
+
+
