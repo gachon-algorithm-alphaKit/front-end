@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 import 'api/auth_api.dart';
 import 'model/user_profile.dart';
@@ -26,6 +27,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
+    builder: (context, child) {
+      return ResponsiveAppWrapper(child: child!);
+    },
     theme: ThemeData(
       colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
       useMaterial3: true,
@@ -73,4 +77,93 @@ class MyApp extends StatelessWidget {
       },
     ),
   );
+}
+
+class ResponsiveAppWrapper extends StatefulWidget {
+  final Widget child;
+  const ResponsiveAppWrapper({super.key, required this.child});
+
+  @override
+  State<ResponsiveAppWrapper> createState() => _ResponsiveAppWrapperState();
+}
+
+class _ResponsiveAppWrapperState extends State<ResponsiveAppWrapper> {
+  static const double desktopBreakpoint = 1920;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (kIsWeb) {
+      precacheImage(const AssetImage('assets/icon/alphakit.png'), context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!kIsWeb) return widget.child;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < desktopBreakpoint) {
+          return widget.child;
+        }
+
+        final screenHeight = constraints.maxHeight;
+        final deviceHeight = screenHeight * 0.92;
+        final deviceWidth = deviceHeight * 9 / 20;
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Row(
+            children: [
+              Expanded(
+                child: Center(
+                  child: IgnorePointer(
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: Image.asset('assets/icon/alphakit.png', width: 200),
+                    ),
+                  ),
+                ),
+              ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 380,
+                    maxWidth: 520,
+                  ),
+                  child: Container(
+                    width: deviceWidth,
+                    height: deviceHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      border: Border.all(color: Colors.black, width: 16),
+                      borderRadius: BorderRadius.circular(40),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: widget.child,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: IgnorePointer(
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: Image.asset('assets/icon/alphakit.png', width: 200),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

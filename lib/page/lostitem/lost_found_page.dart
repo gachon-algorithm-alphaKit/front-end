@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/lost_found_service.dart';
+import '../../constants/lost_item_categories.dart';
 import '../../model/lost_found_model.dart';
 import '../../provider/my_lost_items_provider.dart';
 import 'lost_found_history_page.dart';
@@ -20,6 +21,7 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
   final _ctrl = TextEditingController();
   final bool _isFuzzy = false;
   List<LostItem> _results = [];
+  String _selectedCategory = '전체';
   bool _isLoading = false;
   bool _isFetchingMore = false;
   bool _hasMore = true;
@@ -45,6 +47,22 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
     _debounce?.cancel();
     _ctrl.dispose();
     super.dispose();
+  }
+
+  List<LostItem> get _filteredResults {
+    // 1. 카테고리 필터
+    var filtered = _results.where((item) {
+      if (_selectedCategory == '전체') return true;
+      final cat = (item.category.isNotEmpty) ? item.category : '기타';
+      return cat == _selectedCategory;
+    }).toList();
+
+    // 2. 날짜 최신순 정렬 (검색어 필터는 이미 API 요청 시 서버에서 처리됨)
+    filtered.sort((a, b) {
+      return b.createTime.compareTo(a.createTime);
+    });
+
+    return filtered;
   }
 
   Future<void> _loadAll() async {
@@ -209,6 +227,34 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    InkWell(
+                      onTap: _showCategoryDialog,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.filter_list, size: 18, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              _selectedCategory,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -217,7 +263,7 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
-                : _results.isEmpty
+                : _filteredResults.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -235,10 +281,10 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                 : ListView.separated(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: _results.length + (_isFetchingMore ? 1 : 0),
+                    itemCount: _filteredResults.length + (_isFetchingMore ? 1 : 0),
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (_, i) {
-                      if (i == _results.length) {
+                      if (i == _filteredResults.length) {
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.all(16.0),
@@ -246,7 +292,7 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
                           ),
                         );
                       }
-                      return _lostItemCard(_results[i]);
+                      return _lostItemCard(_filteredResults[i]);
                     },
                   ),
           ),
@@ -345,6 +391,62 @@ class _LostFoundPageState extends ConsumerState<LostFoundPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showCategoryDialog() {
+    final categories = ['전체', ...lostItemCategories];
+    String tempCategory = _selectedCategory;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('카테고리 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              content: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: categories.map((cat) {
+                      return RadioListTile<String>(
+                        title: Text(cat, style: const TextStyle(fontSize: 14)),
+                        value: cat,
+                        groupValue: tempCategory,
+                        activeColor: Colors.redAccent,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setStateDialog(() {
+                              tempCategory = val;
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('취소', style: TextStyle(color: Colors.grey)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedCategory = tempCategory;
+                    });
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('확인', style: TextStyle(color: Colors.redAccent)),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 }

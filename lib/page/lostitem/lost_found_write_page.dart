@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../api/lost_found_service.dart';
 import '../../component/common_widgets.dart';
 import '../../model/lost_found_model.dart';
+import '../../constants/lost_item_categories.dart';
 
 class LostFoundWritePage extends StatefulWidget {
   final ValueChanged<LostFoundPost> onSubmit;
@@ -26,15 +27,7 @@ class _LostFoundWritePageState extends State<LostFoundWritePage> {
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
 
-  final List<String> _categories = [
-    '전자기기',
-    '지갑/카드',
-    '의류/액세서리',
-    '가방/파우치',
-    '학용품',
-    '열쇠/USB',
-    '기타',
-  ];
+  final List<String> _categories = lostItemCategories;
   String? _selectedCategory;
 
   XFile? _newImageFile;
