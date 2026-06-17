@@ -38,15 +38,19 @@ class MyApp extends StatelessWidget {
       future: AuthApi.fetchUserInfo(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-        
+
         // If snapshot data is not null, it means we have a successful fetch.
         // We need to parse it to UserProfile. Wait, I should parse it here or in auth_api?
         // auth_api returns a Map<String, dynamic>. We can parse it here.
         if (snapshot.hasData && snapshot.data != null) {
           try {
-            final profile = UserProfile.fromJson(snapshot.data as Map<String, dynamic>);
+            final profile = UserProfile.fromJson(
+              snapshot.data as Map<String, dynamic>,
+            );
             return MainDashboardPage(initialProfile: profile);
           } catch (e) {
             return const LoginPage(sessionExpired: true);
@@ -62,7 +66,9 @@ class MyApp extends StatelessWidget {
             future: AuthApi.isLoggedIn(),
             builder: (ctx, loginSnapshot) {
               if (loginSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
               }
               final bool hasToken = loginSnapshot.data ?? false;
               if (hasToken) {
@@ -71,7 +77,7 @@ class MyApp extends StatelessWidget {
                 return const LoginPage(sessionExpired: true);
               }
               return const LoginPage();
-            }
+            },
           );
         }
       },
@@ -88,7 +94,7 @@ class ResponsiveAppWrapper extends StatefulWidget {
 }
 
 class _ResponsiveAppWrapperState extends State<ResponsiveAppWrapper> {
-  static const double desktopBreakpoint = 1920;
+  static const double desktopBreakpoint = 600;
 
   @override
   void didChangeDependencies() {
@@ -121,7 +127,10 @@ class _ResponsiveAppWrapperState extends State<ResponsiveAppWrapper> {
                   child: IgnorePointer(
                     child: FittedBox(
                       fit: BoxFit.contain,
-                      child: Image.asset('assets/icon/alphakit.png', width: 200),
+                      child: Image.asset(
+                        'assets/icon/alphakit.png',
+                        width: 200,
+                      ),
                     ),
                   ),
                 ),
@@ -140,7 +149,11 @@ class _ResponsiveAppWrapperState extends State<ResponsiveAppWrapper> {
                       border: Border.all(color: Colors.black, width: 16),
                       borderRadius: BorderRadius.circular(40),
                       boxShadow: const [
-                        BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5),
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
                       ],
                     ),
                     child: ClipRRect(
@@ -155,7 +168,10 @@ class _ResponsiveAppWrapperState extends State<ResponsiveAppWrapper> {
                   child: IgnorePointer(
                     child: FittedBox(
                       fit: BoxFit.contain,
-                      child: Image.asset('assets/icon/alphakit.png', width: 200),
+                      child: Image.asset(
+                        'assets/icon/alphakit.png',
+                        width: 200,
+                      ),
                     ),
                   ),
                 ),
