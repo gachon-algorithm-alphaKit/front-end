@@ -1,3 +1,13 @@
+// 실행 환경: Flutter 3.x / Dart 3.x
+// 필요 라이브러리: 없음 (순수 Dart 모델 클래스)
+// Input 데이터 출처: 가천대학교 강의 정보 (직접 수집 → 서버 DB 저장)
+//   - 서버 응답 JSON 필드: course_id, course_name, professor_name, description,
+//                          day_of_week, start_time, end_time, major_term
+
+// 검색 타입 분기 (서버 search_type 파라미터에 대응)
+// name      → 알고리즘: Trie 탐색 + Rabin-Karp (강의명)
+// professor → 알고리즘: Trie 탐색 + Rabin-Karp (교수명)
+// content   → 알고리즘: Rabin-Karp 단독 (강의 설명)
 enum SearchType { name, professor, content }
 
 class Professor {
@@ -29,18 +39,23 @@ class Professor {
   }
 }
 
+// 자료구조: Course 모델 (자료구조·알고리즘 연결 필드)
+// - courseId    : 자료구조 HashTable의 키 (course_id → 강의 정보 O(1) 조회)
+// - courseName  : 자료구조 Trie에 삽입되는 단어 (강의명 접두사 탐색)
+// - professorName: 자료구조 Trie에 삽입되는 단어 (교수명 접두사 탐색)
+// - description : 알고리즘 Rabin-Karp 탐색 대상 텍스트 (강의 내용 검색)
 class Course {
-  final int courseId;
+  final int courseId;         // 자료구조: HashTable 키
   final int schoolId;
   final int professorId;
   final String courseCode;
-  final String courseName;
-  final String description;
+  final String courseName;    // 자료구조: Trie 삽입 키 (강의명)
+  final String description;   // 알고리즘: Rabin-Karp 탐색 대상
   final String dayOfWeek;
   final String startTime;
   final String endTime;
   final String majorTerm;
-  final String professorName;
+  final String professorName; // 자료구조: Trie 삽입 키 (교수명)
 
   const Course({
     required this.courseId,
