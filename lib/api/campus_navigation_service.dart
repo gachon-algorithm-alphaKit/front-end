@@ -29,9 +29,9 @@ class CampusNavigationService {
 
   // 모든 노드 (건물 + 경로 노드)
   static Map<String, (double, double)> get allCoords => {
-        ...buildingCoords,
-        ...pathNodes,
-      };
+    ...buildingCoords,
+    ...pathNodes,
+  };
 
   // 건물 이름 목록 (UI 자동완성용)
   static List<String> get buildingNames => buildingCoords.keys.toList();
@@ -41,12 +41,14 @@ class CampusNavigationService {
     if (_initialized) return;
 
     try {
-      final response = await http.get(Uri.parse('$baseUrl/api/campus/graph/')).timeout(const Duration(seconds: 5));
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/campus/graph/'))
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         if (decoded['status'] == 'success') {
           final data = decoded['data'];
-          
+
           buildingCoords.clear();
           pathNodes.clear();
           final nodes = data['nodes'] as Map<String, dynamic>;
@@ -84,14 +86,15 @@ class CampusNavigationService {
   // ----------------------------------------------------------
   // 5. 별칭 → 실제 건물명 변환 (Python: resolve_name)
   // ----------------------------------------------------------
-  static String resolveName(String name) =>
-      buildingAliases[name] ?? name;
+  static String resolveName(String name) => buildingAliases[name] ?? name;
 
   // ----------------------------------------------------------
   // 6. Haversine 거리 계산 (단위: m) (Python: haversine_distance)
   // ----------------------------------------------------------
   static double haversineDistance(
-      (double, double) coord1, (double, double) coord2) {
+    (double, double) coord1,
+    (double, double) coord2,
+  ) {
     const r = 6371000.0;
     final lat1 = coord1.$1 * pi / 180;
     final lon1 = coord1.$2 * pi / 180;
@@ -99,7 +102,8 @@ class CampusNavigationService {
     final lon2 = coord2.$2 * pi / 180;
     final dlat = lat2 - lat1;
     final dlon = lon2 - lon1;
-    final a = sin(dlat / 2) * sin(dlat / 2) +
+    final a =
+        sin(dlat / 2) * sin(dlat / 2) +
         cos(lat1) * cos(lat2) * sin(dlon / 2) * sin(dlon / 2);
     return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
@@ -135,8 +139,7 @@ class CampusNavigationService {
   ) {
     // 우선순위 큐: (f_score, node)
     // Dart에는 내장 MinHeap이 없으므로 SplayTreeSet으로 구현
-    final openSet =
-        SplayTreeSet<(double, String)>((a, b) {
+    final openSet = SplayTreeSet<(double, String)>((a, b) {
       final cmp = a.$1.compareTo(b.$1);
       return cmp != 0 ? cmp : a.$2.compareTo(b.$2);
     });
@@ -191,9 +194,13 @@ class CampusNavigationService {
   }
 
   // ----------------------------------------------------------
-  // 9. Nearest Neighbor 탐욕 알고리즘 (Python: optimize_route)
-  // 경유지 순서 결정 + 전체 최적 경로 반환
-  // 반환: (fullPath, totalCostM, bestOrder) — 실패 시 (null, inf, [])
+  // 9. Nearest Neighbor 알고리즘 (Python: optimize_route)
+  // [Description]
+  // 다중 경유지(Waypoints) 방문 순서를 최적화하기 위해 Nearest Neighbor(Greedy) 휴리스틱을 적용합니다.
+  // 현재 노드 기준 A* 최단 거리가 가장 짧은 경유지를 다음 방문지로 선택하여 전체 경로를 구성합니다.
+  // (TSP 문제에 대한 근사해 탐색)
+  // 
+  // 반환: (전체 통합 경로 노드 리스트, 총 거리(m), 최적화된 경유지 순서) — 실패 시 (null, double.infinity, []) 반환
   // ----------------------------------------------------------
   static (List<String>?, double, List<String>) optimizeRoute(
     String start,
@@ -214,7 +221,7 @@ class CampusNavigationService {
     for (final wp in waypoints) {
       final (seg, cost) = aStar(current, wp, graph, coords);
       if (seg == null) return (null, double.infinity, []);
-      
+
       totalCost += cost;
       fullPath.addAll(fullPath.isEmpty ? seg : seg.skip(1));
       current = wp;
@@ -222,7 +229,7 @@ class CampusNavigationService {
 
     final (seg, cost) = aStar(current, end, graph, coords);
     if (seg == null) return (null, double.infinity, []);
-    
+
     totalCost += cost;
     fullPath.addAll(seg.skip(1));
 
@@ -230,31 +237,30 @@ class CampusNavigationService {
   }
 
   // ----------------------------------------------------------
-  // 10. 공개 API: findRoute (campus_navigation_page.dart에서 호출)
-  //
-  // departure, waypoints, destination 은 건물명 또는 별칭.
-  // 내부적으로 A* + Nearest Neighbor 를 실행하고
-  // RouteResult 로 변환하여 반환합니다.
+  // 10. 길찾기 Public API: findRoute
+  // [Description]
+  // 입력된 출발지, 경유지, 도착지를 기반으로 최적화된 캠퍼스 경로 데이터를 생성합니다.
+  // 1) Alias Resolution: 사용자가 입력한 별칭을 정규화된 노드 ID로 매핑
+  // 2) Graph Construction: 좌표 데이터와 Walkable Edges를 기반으로 Adjacency List 생성
+  // 3) Routing: A* 알고리즘과 Nearest Neighbor 기반으로 구간 및 전체 최적 경로 계산
+  // 4) Result Formatting: UI 바인딩을 위한 RouteResult 모델 래핑 (숨겨진 P_ 노드 필터링 포함)
   // ----------------------------------------------------------
   static Future<RouteResult> findRoute(
     String departure,
     List<String> waypoints,
     String destination,
   ) async {
-    // 0) 데이터 초기화 확인
     if (!_initialized) {
       await initialize();
     }
 
-    // 1) 별칭 → 정규 이름 변환
     final start = resolveName(departure.trim());
-    final end   = resolveName(destination.trim());
-    final wps   = waypoints
+    final end = resolveName(destination.trim());
+    final wps = waypoints
         .map((w) => resolveName(w.trim()))
         .where((w) => w.isNotEmpty)
         .toList();
 
-    // 2) 입력 검증
     final coords = allCoords;
     for (final name in [start, end, ...wps]) {
       if (!buildingCoords.containsKey(name)) {
@@ -262,28 +268,28 @@ class CampusNavigationService {
       }
     }
 
-    // 3) 그래프 생성
     final graph = buildCampusGraph(coords, walkableEdges);
 
-    // 4) 경로 탐색 (Nearest Neighbor + A*)
-    final (fullPath, totalCost, bestOrder) =
-        optimizeRoute(start, end, wps, graph, coords);
+    final (fullPath, totalCost, bestOrder) = optimizeRoute(
+      start,
+      end,
+      wps,
+      graph,
+      coords,
+    );
 
     if (fullPath == null) {
       throw StateError('경로를 찾을 수 없습니다. WALKABLE_EDGES 연결 관계를 확인하세요.');
     }
 
-    // 5) WaypointResult 세그먼트 목록 생성
-    //    orderedStops: 출발 → (경유지 최적 순서) → 도착
     final orderedStops = [start, ...bestOrder, end];
     final segments = <WaypointResult>[];
 
     for (int i = 0; i < orderedStops.length - 1; i++) {
       final from = orderedStops[i];
-      final to   = orderedStops[i + 1];
+      final to = orderedStops[i + 1];
       final (segPath, segCost) = aStar(from, to, graph, coords);
 
-      // 구간 경로에서 P_ 노드를 제거하고 건물명만 표시
       final visiblePath = (segPath ?? [from, to])
           .where((n) => !n.startsWith('P_'))
           .toList();
@@ -291,12 +297,14 @@ class CampusNavigationService {
         visiblePath.addAll([from, to]);
       }
 
-      segments.add(WaypointResult(
-        from: from,
-        to: to,
-        distanceM: segCost.isInfinite ? 0 : segCost,
-        path: visiblePath,
-      ));
+      segments.add(
+        WaypointResult(
+          from: from,
+          to: to,
+          distanceM: segCost.isInfinite ? 0 : segCost,
+          path: visiblePath,
+        ),
+      );
     }
 
     return RouteResult(
@@ -306,18 +314,10 @@ class CampusNavigationService {
     );
   }
 
-  // ----------------------------------------------------------
-  // 11. 네이버 Static Map API 호출 (Python: generate_static_map)
-  //
-  // fullPath     : A* 결과 전체 노드 목록 (P_ 포함)
-  // 반환          : PNG 이미지 바이트 (Uint8List)
-  // 실패 시        : null 반환
-  // ----------------------------------------------------------
-  static const int    _mapLevel     = 16;
-  static const int    _imgW         = 1024;
-  static const int    _imgH         = 1024;
+  static const int _mapLevel = 16;
+  static const int _imgW = 1024;
+  static const int _imgH = 1024;
 
-  /// 네이버 Static Maps API에서 지도 이미지를 받아 PNG 바이트로 반환합니다.
   static Future<Uint8List?> fetchNaverStaticMap(
     List<String> fullPath, {
     int w = _imgW,
@@ -330,14 +330,15 @@ class CampusNavigationService {
 
     final centerLat = (lats.reduce(min) + lats.reduce(max)) / 2;
     final centerLon = (lons.reduce(min) + lons.reduce(max)) / 2;
-    final centerStr = '${centerLon.toStringAsFixed(7)},${centerLat.toStringAsFixed(7)}';
+    final centerStr =
+        '${centerLon.toStringAsFixed(7)},${centerLat.toStringAsFixed(7)}';
 
-    final uri = Uri.parse('$baseUrl/api/campus/map/?w=$w&h=$h&center=$centerStr&level=$_mapLevel&format=png');
+    final uri = Uri.parse(
+      '$baseUrl/api/campus/map/?w=$w&h=$h&center=$centerStr&level=$_mapLevel&format=png',
+    );
 
     try {
-      final response = await http.get(
-        uri,
-      ).timeout(const Duration(seconds: 10));
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return response.bodyBytes;

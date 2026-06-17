@@ -59,6 +59,8 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
   }
 
   Future<void> _search() async {
+    // [Input Validation]
+    // Validate required fields and sanitize text inputs.
     final depart = _departCtrl.text.trim();
     final dest = _destCtrl.text.trim();
     if (depart.isEmpty || dest.isEmpty) {
@@ -74,14 +76,32 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
       _naverError = null;
     });
     try {
-      final r = await CampusNavigationService.findRoute(depart, _waypointCtrls.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList(), dest);
+      // [Route Calculation]
+      // Fetch optimized route via A* and Nearest Neighbor algorithms.
+      final r = await CampusNavigationService.findRoute(
+        depart,
+        _waypointCtrls
+            .map((c) => c.text.trim())
+            .where((s) => s.isNotEmpty)
+            .toList(),
+        dest,
+      );
 
-      // fullPath 재구성 (P_ 노드 포함)
-      final graph = CampusNavigationService.buildCampusGraph(CampusNavigationService.allCoords, CampusNavigationService.walkableEdges);
+      // [Path Reconstruction]
+      // Reconstruct full path including intermediate (P_) nodes for visualization.
+      final graph = CampusNavigationService.buildCampusGraph(
+        CampusNavigationService.allCoords,
+        CampusNavigationService.walkableEdges,
+      );
       final stops = r.orderedStops;
       final fullPath = <String>[];
       for (int i = 0; i < stops.length - 1; i++) {
-        final (seg, _) = CampusNavigationService.aStar(stops[i], stops[i + 1], graph, CampusNavigationService.allCoords);
+        final (seg, _) = CampusNavigationService.aStar(
+          stops[i],
+          stops[i + 1],
+          graph,
+          CampusNavigationService.allCoords,
+        );
         if (seg != null) {
           fullPath.addAll(fullPath.isEmpty ? seg : seg.skip(1));
         }
@@ -148,7 +168,9 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
                       waypointCtrls: _waypointCtrls,
                       isLoading: _isLoading,
                       onSearch: _search,
-                      onAddWaypoint: () => setState(() => _waypointCtrls.add(TextEditingController())),
+                      onAddWaypoint: () => setState(
+                        () => _waypointCtrls.add(TextEditingController()),
+                      ),
                       onRemoveWaypoint: (idx) => setState(() {
                         _waypointCtrls[idx].dispose();
                         _waypointCtrls.removeAt(idx);
