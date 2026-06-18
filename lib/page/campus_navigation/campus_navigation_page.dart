@@ -1,3 +1,8 @@
+// 실행 환경: Flutter 3.x / Dart 3.x (Android / iOS / Web)
+// 필요 라이브러리: flutter, http (서비스 연동 시)
+// 역할: 캠퍼스 길찾기 UI 및 사용자와의 상호작용
+// 알고리즘 연동: A* + Nearest Neighbor (CampusNavigationService.findRoute 호출)
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -18,8 +23,11 @@ class CampusNavigationPage extends StatefulWidget {
 class _CampusNavigationPageState extends State<CampusNavigationPage> {
   final _departCtrl = TextEditingController();
   final _destCtrl = TextEditingController();
+  // 자료구조: List<TextEditingController> - 동적으로 추가/삭제되는 경유지 입력 컨트롤러 관리 배열
   final _waypointCtrls = <TextEditingController>[];
+  // 자료구조: RouteResult - 전체 캠퍼스 경로 탐색 결과 데이터 보관
   RouteResult? _result;
+  // 자료구조: List<String> - 지도에 시각화할 전체 경로 좌표 노드(P_ 포함) 리스트
   List<String>? _fullPath; // P_ 포함 전체 경로
   bool _isLoading = false;
   bool _isInitializing = true;
@@ -77,7 +85,7 @@ class _CampusNavigationPageState extends State<CampusNavigationPage> {
     });
     try {
       // [Route Calculation]
-      // Fetch optimized route via A* and Nearest Neighbor algorithms.
+      // 알고리즘: A* + Nearest Neighbor (TSP 근사) 최적 경로 및 경유지 순서 계산
       final r = await CampusNavigationService.findRoute(
         depart,
         _waypointCtrls

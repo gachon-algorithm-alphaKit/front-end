@@ -1,3 +1,7 @@
+// 실행 환경: Flutter 3.x / Dart 3.x (Android / iOS / Web)
+// 필요 라이브러리: http: ^1.6.0
+// Input 데이터 출처: 서버 GET /api/campus/graph/ 및 /api/campus/map/
+// 
 // ============================================================
 // campus_navigation_service.dart
 //
@@ -22,9 +26,13 @@ class CampusNavigationService {
   // ----------------------------------------------------------
   // 1. 서버에서 받아올 그래프 데이터
   // ----------------------------------------------------------
+  // 자료구조: Map<String, (double, double)> (해시 맵 / Hash Table)
+  // - 건물 및 경로 노드의 위경도 좌표 보관 (O(1) 검색)
   static Map<String, (double, double)> buildingCoords = {};
   static Map<String, (double, double)> pathNodes = {};
+  // 자료구조: Map<String, String> (해시 맵) - 건물 별칭 → 정식 명칭 매핑
   static Map<String, String> buildingAliases = {};
+  // 자료구조: List<(String, String)> - 경로 간 연결 정보(Edge) 보관
   static List<(String, String)> walkableEdges = [];
 
   // 모든 노드 (건물 + 경로 노드)
@@ -110,6 +118,8 @@ class CampusNavigationService {
 
   // ----------------------------------------------------------
   // 7. 그래프 생성 (Python: build_campus_graph)
+  // 자료구조: 인접 리스트(Adjacency List) 형태의 Map<String, Map<String, double>>
+  // - 각 노드에 연결된 이웃 노드와 거리(가중치)를 저장하여 탐색 성능 최적화
   // ----------------------------------------------------------
   static Map<String, Map<String, double>> buildCampusGraph(
     Map<String, (double, double)> coords,
@@ -129,6 +139,9 @@ class CampusNavigationService {
 
   // ----------------------------------------------------------
   // 8. A* 알고리즘 (Python: a_star)
+  // 알고리즘: A* Search Algorithm
+  // - 휴리스틱: Haversine distance (현재 노드에서 목표 노드까지의 직선 거리)
+  // 자료구조: SplayTreeSet<(double, String)> - 우선순위 큐(Priority Queue) 대용, 최소 f_score 추출 (O(log n))
   // 반환: (경로 노드 목록, 총 거리m) — 경로 없으면 (null, inf)
   // ----------------------------------------------------------
   static (List<String>?, double) aStar(
@@ -138,24 +151,29 @@ class CampusNavigationService {
     Map<String, (double, double)> coords,
   ) {
     // 우선순위 큐: (f_score, node)
+    // 자료구조: SplayTreeSet<(double, String)> - 최솟값 탐색 O(log n) 우선순위 큐 대용
     // Dart에는 내장 MinHeap이 없으므로 SplayTreeSet으로 구현
     final openSet = SplayTreeSet<(double, String)>((a, b) {
       final cmp = a.$1.compareTo(b.$1);
       return cmp != 0 ? cmp : a.$2.compareTo(b.$2);
     });
 
+    // 자료구조: Map<String, String> (해시 맵) - 각 노드에 도달하기 직전 노드 추적 (경로 재구성용)
     final cameFrom = <String, String>{};
+    // 자료구조: Map<String, double> (해시 맵) - 시작점부터 현재 노드까지의 최단 거리 비용 저장
     final gScore = <String, double>{
       for (final n in graph.keys) n: double.infinity,
     };
     gScore[start] = 0.0;
 
+    // 자료구조: Map<String, double> (해시 맵) - 현재까지 최단 거리 + 도착지까지의 휴리스틱 예상 거리 저장
     final fScore = <String, double>{
       for (final n in graph.keys) n: double.infinity,
     };
     fScore[start] = haversineDistance(coords[start]!, coords[goal]!);
     openSet.add((fScore[start]!, start));
 
+    // 자료구조: Set<String> (해시 집합) - 이미 방문/탐색 완료된 노드 추적 (O(1) 조회로 중복 방지)
     final closedSet = <String>{};
 
     while (openSet.isNotEmpty) {
@@ -196,6 +214,7 @@ class CampusNavigationService {
   // ----------------------------------------------------------
   // 9. Nearest Neighbor 알고리즘 (Python: optimize_route)
   // [Description]
+  // 알고리즘: Nearest Neighbor(Greedy) 휴리스틱
   // 다중 경유지(Waypoints) 방문 순서를 최적화하기 위해 Nearest Neighbor(Greedy) 휴리스틱을 적용합니다.
   // 현재 노드 기준 A* 최단 거리가 가장 짧은 경유지를 다음 방문지로 선택하여 전체 경로를 구성합니다.
   // (TSP 문제에 대한 근사해 탐색)
@@ -282,7 +301,9 @@ class CampusNavigationService {
       throw StateError('경로를 찾을 수 없습니다. WALKABLE_EDGES 연결 관계를 확인하세요.');
     }
 
+    // 자료구조: List<String> - 출발지, 최적화된 경유지, 도착지를 순서대로 합친 리스트
     final orderedStops = [start, ...bestOrder, end];
+    // 자료구조: List<WaypointResult> - 각 구간별 결과(거리, 경로)를 순차적으로 담는 배열
     final segments = <WaypointResult>[];
 
     for (int i = 0; i < orderedStops.length - 1; i++) {
