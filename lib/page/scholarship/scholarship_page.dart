@@ -26,6 +26,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
   int _minAmount = 0; // 최소 장학금 금액 필터 (0 = 제한없음)
   int _personalTuition = 0; // 개인 등록금
   int _minPercentage = 0; // 장학금 비율 (0, 10, 30, 50, 100)
+  // [자료구조: 리스트 (List)] 서버에서 수신한 장학금 목록을 유지하며 순차적 탐색 및 무한 스크롤 데이터 축적에 적합
   List<Scholarship> _scholarships = [];
   bool _isLoading = false;
   String _filter = '매칭순';
@@ -123,6 +124,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
     }
   }
 
+  // [자료구조: 리스트 (List)] 필터링(where) 및 정렬(sort)을 거쳐 렌더링을 위한 결과 목록을 동적으로 생성
   List<Scholarship> get _filtered {
     // 최소 금액 필터 & 비율 필터 동시 적용
     final byAmount = _scholarships.where((s) {

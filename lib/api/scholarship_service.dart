@@ -4,8 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/scholarship_model.dart';
 import 'package:alpha_kit/config/api_constants.dart';
-
+// 실행 환경: Flutter (Dart SDK)
+// 필요 라이브러리: package:flutter/material.dart, 관련 프로젝트 내 API/Model/Widget 모듈
+// Input 데이터 출처: 가천대학교 장학 제도 공지 및 한국장학재단 공개 정보
 class ScholarshipService {
+  // [자료구조: 리스트 (List)] 서버로부터 매칭 점수 기준(Timsort, O(n log n))으로 정렬된 장학금 목록을 수신
   static Future<List<Scholarship>> fetch(
     double gpa,
     int grade,

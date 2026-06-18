@@ -1,3 +1,6 @@
+// 실행 환경: Flutter (Dart SDK)
+// 필요 라이브러리: package:flutter/material.dart, 관련 프로젝트 내 API/Model/Widget 모듈
+// Input 데이터 출처: 가천대학교 장학 제도 공지 및 한국장학재단 공개 정보
 class Scholarship {
   final int scholarshipId;
   final int schoolId;
@@ -40,6 +43,7 @@ class Scholarship {
   });
 
   factory Scholarship.fromJson(Map<String, dynamic> json) {
+    // [자료구조: 딕셔너리 (Map)] JSON의 key-value 구조를 활용하여 추천 정보(recommendation_info)를 O(1) 성능으로 추출
     final rec = json['recommendation_info'] as Map<String, dynamic>?;
 
     return Scholarship(
