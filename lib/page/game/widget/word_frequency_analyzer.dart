@@ -1,5 +1,6 @@
-
-
+// 실행 환경: Flutter (Dart SDK)
+// 필요 라이브러리: (없음)
+// Input 데이터 출처: generate_balancegame_dummy.py 내 랜덤 생성
 /// 한국어 불용어 + 댓글에서 단어 빈도를 분석하는 유틸리티
 class WordFrequencyAnalyzer {
   WordFrequencyAnalyzer._();
@@ -36,6 +37,7 @@ class WordFrequencyAnalyzer {
 
   /// 댓글 리스트에서 상위 [topN]개 단어 빈도 분석
   static Map<String, int> analyze(List<String> texts, {int topN = 20}) {
+    // [자료구조: 해시맵 (Map)] 단어를 키로, 출현 빈도를 값으로 하여 O(1) 성능으로 빈도 집계
     final freq = <String, int>{};
 
     for (final text in texts) {

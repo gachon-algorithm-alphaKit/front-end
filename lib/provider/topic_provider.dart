@@ -1,3 +1,6 @@
+// 실행 환경: Flutter (Dart SDK)
+// 필요 라이브러리: legacy.dart, topic_model.dart, topic_api_service.dart,  topic_cache_service.dart
+// Input 데이터 출처: generate_balancegame_dummy.py 내 랜덤 생성
 import 'package:flutter_riverpod/legacy.dart';
 import '../model/topic_model.dart';
 import '../api/topic_api_service.dart';
@@ -276,6 +279,7 @@ class TopicCommentState {
 }
 
 class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
+  // [자료구조: 리스트 (List)] 댓글 목록을 순서 있는 리스트로 관리하며 무한 스크롤 시 데이터를 이어붙임
   final String arg; // "topicId_opinion" e.g. "5_true"
 
   TopicCommentNotifier(this.arg)
@@ -376,7 +380,7 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
   Future<bool> editComment(int commentId, String newText) async {
     final previousComments = state.comments;
     
-    // 낙관적 업데이트
+    // [불변 상태 리스트] map()을 사용하여 리스트를 직접 수정하지 않고 새 리스트를 생성하여 낙관적 업데이트 수행
     final optimistic = state.comments.map((c) {
       return c.commentId == commentId ? c.copyWith(comment: newText) : c;
     }).toList();
@@ -402,7 +406,7 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
     final previousComments = state.comments;
     final previousCount = state.totalCount;
 
-    // 낙관적 업데이트
+    // [불변 상태 리스트] where()를 통해 특정 항목이 제거된 새로운 리스트를 생성하여 즉시 UI 반영 (Optimistic UI)
     final optimistic = state.comments
         .where((c) => c.commentId != commentId)
         .toList();
@@ -433,7 +437,7 @@ class TopicCommentNotifier extends StateNotifier<TopicCommentState> {
 
   /// 좋아요 토글 (낙관적 업데이트)
   Future<void> toggleLike(int commentId) async {
-    // 낙관적 업데이트
+    // [불변 상태 리스트] 토글 시 새 리스트를 생성하여 즉시 반영하며 실패 시 서버 데이터로 롤백 용이
     final optimistic = state.comments.map((c) {
       if (c.commentId == commentId) {
         return c.copyWith(

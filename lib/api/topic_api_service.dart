@@ -1,3 +1,7 @@
+// 실행 환경: Flutter (Dart SDK)
+// 필요 라이브러리: dark:conver, http.dart, shared_preferences.dart, topic_model.dart, api_constants.dart
+// Input 데이터 출처: generate_balancegame_dummy.py 내 랜덤 생성
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -155,7 +159,7 @@ class TopicApiService {
     return null;
   }
 
-  // ── 댓글 목록 조회 (의견별, 커서 기반 페이지네이션) ──────────
+  // [알고리즘] (의견별, 커서 기반 페이지네이션)
   static Future<Map<String, dynamic>> fetchComments(
     int topicId, {
     required bool opinion,
@@ -178,6 +182,7 @@ class TopicApiService {
         if (decoded['status'] == 'success') {
           final data = decoded['data'] as Map<String, dynamic>? ?? {};
           final commentsList = data['comments'] as List<dynamic>? ?? [];
+          // [자료구조: 리스트 (List)] 서버에서 정렬된 순서대로 댓글 데이터를 수신하여 리스트로 변환
           final comments =
               commentsList.map((json) => TopicComment.fromJson(json as Map<String, dynamic>)).toList();
           return {

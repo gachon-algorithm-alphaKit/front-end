@@ -1,3 +1,6 @@
+// 실행 환경: Flutter (Dart SDK)
+// 필요 라이브러리: (없음)
+// Input 데이터 출처: generate_balancegame_dummy.py 내 랜덤 생성
 class Topic {
   final int topicId;
   final String title;
@@ -22,6 +25,7 @@ class Topic {
   });
 
   factory Topic.fromJson(Map<String, dynamic> json) {
+    // [자료구조: 딕셔너리 (Map)] JSON을 해시맵으로 변환하여 토픽 정보를 O(1) 성능으로 추출
     return Topic(
       topicId: json['topic_id'] ?? 0,
       title: json['title'] ?? '',
@@ -86,6 +90,7 @@ class TopicComment {
   });
 
   factory TopicComment.fromJson(Map<String, dynamic> json) {
+    // [자료구조: 딕셔너리 (Map)] JSON의 키-값 구조를 활용하여 댓글 상세 정보를 O(1)에 파싱
     return TopicComment(
       commentId: json['comment_id'] ?? 0,
       writer: json['writer'] ?? '익명',
@@ -146,6 +151,7 @@ class VoteStat {
   });
 
   factory VoteStat.fromJson(Map<String, dynamic> json) {
+    // [자료구조: 딕셔너리 (Map)] 투표 통계 데이터를 해시맵으로 수신하여 속도 저하 없이 추출
     return VoteStat(
       opinion1Count: json['opinion_1_count'] ?? 0,
       opinion2Count: json['opinion_2_count'] ?? 0,
