@@ -1,3 +1,6 @@
+// 실행 환경: Flutter (Dart SDK)
+// 필요 라이브러리: package:flutter/material.dart, 관련 프로젝트 내 API/Model/Widget 모듈
+// Input 데이터 출처: 가천대학교 장학 제도 공지 및 한국장학재단 공개 정보
 import 'package:flutter/material.dart';
 
 import '../../api/scholarship_service.dart';
@@ -131,6 +134,7 @@ class _ScholarshipPageState extends State<ScholarshipPage> {
       return true;
     }).toList();
     final result = List<Scholarship>.from(byAmount);
+    // [이중 피벗 퀵 정렬] Dart의 List.sort()를 사용하여 선택한 필터 기준으로 정렬
     switch (_filter) {
       case '매칭순':
         result.sort((a, b) => b.matchScore.compareTo(a.matchScore));
